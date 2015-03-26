@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+
+Data loading functions of Dynacomp dataset,
+and some utils.
+
 Created on Thu Mar 26 14:09:41 2015
 
 @author: mehdi.rahim@cea.fr
@@ -57,7 +61,6 @@ def load_dynacomp_rois():
             rois_dict[roi_name] = r
         subject_rois.append(rois_dict)
     return subject_rois
-    
 
 def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     """ Returns paths of Dynacomp preprocessed resting-state fMRI
@@ -96,8 +99,7 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
                  func2=session2_files,
                  anat=anat_files, group_indices=indices, rois=rois,
                  group=group, subjects=subjects)
-   
-    
+ 
 def array_to_niis(data, mask):
     """ Converts masked nii 4D array to 4D niimg
     """
