@@ -31,3 +31,12 @@ def compute_rois_coords(subject_id):
         filepath, _ = os.path.split(rois[key])
         print filepath
         np.save(os.path.join(filepath, 'rois_coords.npy') , roi_center)
+
+
+
+for i in len(dataset):
+    maps_img = dict_to_list(dataset.rois[i])
+    # add mask, filtering and detrending
+    masker = NiftiMapsMasker(maps_img=maps_img, resampling_target='data')
+    masker.fit_transform(dataset.func1)
+    
