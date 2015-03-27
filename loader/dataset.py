@@ -67,10 +67,10 @@ def get_behavior_scores(description, subject_id):
     """ Returns behavioral scores of a subject_id
     """
     d = description[description.NIP == subject_id].to_dict('list')
-    keys = ['ANAT', 'DATE', 'GROUP', 'NIP', 'N_EXAM', 'RS1', 'RS2']    
+    excluded_keys = ['ANAT', 'DATE', 'GROUP', 'NIP', 'N_EXAM', 'RS1', 'RS2']    
     behav = {}
     for key in d.keys():
-        if not key in keys:
+        if not key in excluded_keys:
             behav[key] = d[key][0]
     return behav
     
@@ -96,7 +96,7 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
         # functional data
         session1_files.append(glob.glob(os.path.join(f, 'fMRI', 'acquisition1',
                                                      prefix + 'rest1*.nii'))[0])
-        session1_files.append(glob.glob(os.path.join(f, 'fMRI', 'acquisition1',
+        session2_files.append(glob.glob(os.path.join(f, 'fMRI', 'acquisition1',
                                                      prefix + 'rest2*.nii'))[0])
         # anatomical data
         anat_files.append(glob.glob(os.path.join(f, 't1mri', 'acquisition1',
@@ -137,8 +137,16 @@ def array_to_nii(data, mask):
     data_[mask_img.get_data().astype(np.bool)] = data
     return nib.Nifti1Image(data_, mask_img.get_affine())
 
-def dict_to_array(dic, key):
-    """ Returns an array from a list of dicts for a given key
+def dict_to_list(dic):
+    """ Returns a list from a dict
+    """
+    list_ = []
+    for key in dic.keys():
+        list_.append(dic[key])
+    return list_
+
+def list_of_dicts_to_key_list(dic, key):
+    """ Returns a list from a list of dicts for a given key
     """
     list_key = []
     for d in dic:
