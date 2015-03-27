@@ -62,6 +62,19 @@ def load_dynacomp_rois():
         subject_rois.append(rois_dict)
     return subject_rois
 
+
+def get_behavior_scores(description, subject_id):
+    """ Returns behavioral scores of a subject_id
+    """
+    d = description[description.NIP == subject_id].to_dict('list')
+    keys = ['ANAT', 'DATE', 'GROUP', 'NIP', 'N_EXAM', 'RS1', 'RS2']    
+    behav = {}
+    for key in d.keys():
+        if not key in keys:
+            behav[key] = d[key][0]
+    return behav
+    
+
 def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     """ Returns paths of Dynacomp preprocessed resting-state fMRI
     """
@@ -74,6 +87,8 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     anat_files = []
     group = []
     subjects = []
+    behavior = []
+    date = []
     for f in subject_paths:
         # subject id
         _, subject_id = os.path.split(f)
@@ -90,15 +105,20 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
         gr = description[description.NIP == subject_id].GROUP.values
         if len(gr) > 0:
             group.append(gr[0])
+        # date acquisition
+        dt = description[description.NIP == subject_id].DATE.values
+        if len(dt) > 0:
+            date.append(dt[0])
         # subject id
         subjects.append(subject_id)
+        behavior.append(get_behavior_scores(description, subject_id))
     
     indices = set_group_indices(group)
     rois = load_dynacomp_rois()
     return Bunch(func1=session1_files,
                  func2=session2_files,
                  anat=anat_files, group_indices=indices, rois=rois,
-                 group=group, subjects=subjects)
+                 group=group, subjects=subjects, date=date, behavior=behavior)
  
 def array_to_niis(data, mask):
     """ Converts masked nii 4D array to 4D niimg
@@ -116,3 +136,11 @@ def array_to_nii(data, mask):
     data_ = np.zeros(mask_img.shape)
     data_[mask_img.get_data().astype(np.bool)] = data
     return nib.Nifti1Image(data_, mask_img.get_affine())
+
+def dict_to_array(dic, key):
+    """ Returns an array from a list of dicts for a given key
+    """
+    list_key = []
+    for d in dic:
+        list_key.append(d[key])
+    return list_key
