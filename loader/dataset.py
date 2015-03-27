@@ -81,6 +81,7 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     BASE_DIR = set_data_base_dir('Dynacomp')
     SUBJ_DIR = os.path.join(BASE_DIR, 'preprocessed', preprocessing_folder)
     subject_paths = sorted(glob.glob(os.path.join(SUBJ_DIR, '[A-Z][A-Z]*')))
+    mask_path = os.path.join(BASE_DIR, 'masks', 'all_subjects.nii.gz')
     description = pd.read_csv(os.path.join(BASE_DIR, 'subject_infos.csv'))
     session1_files = []
     session2_files = []
@@ -118,7 +119,8 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     return Bunch(func1=session1_files,
                  func2=session2_files,
                  anat=anat_files, group_indices=indices, rois=rois,
-                 group=group, subjects=subjects, date=date, behavior=behavior)
+                 group=group, subjects=subjects, date=date, behavior=behavior,
+                 mask=mask_path)
  
 def array_to_niis(data, mask):
     """ Converts masked nii 4D array to 4D niimg
