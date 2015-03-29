@@ -143,7 +143,7 @@ def dict_to_list(dic):
     """ Returns a list from a dict
     """
     list_ = []
-    for key in dic.keys():
+    for key in sorted(dic.keys()):
         list_.append(dic[key])
     return list_
 
