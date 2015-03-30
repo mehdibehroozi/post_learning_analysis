@@ -47,7 +47,7 @@ def load_dynacomp_rois():
     """ Returns paths of Dynacomp ROIs
     """
     ROI_DIR = set_data_base_dir('Dynacomp/rois')
-    
+
     subject_paths = sorted(glob.glob(os.path.join(ROI_DIR, '[A-Z][A-Z]*')))
     subject_rois = []
     for f in subject_paths:
@@ -60,6 +60,22 @@ def load_dynacomp_rois():
             roi_name, _ = os.path.splitext(roi_name)
             rois_dict[roi_name] = r
         subject_rois.append(rois_dict)
+    return subject_rois
+
+def load_roi_names(subject_id):
+    """ Returns paths of Dynacomp ROIs
+    """
+    ROI_DIR = set_data_base_dir('Dynacomp/rois')
+    subject_path = os.path.join(ROI_DIR, subject_id)
+    roi_files = sorted(glob.glob(os.path.join(subject_path, '*.nii')))
+    subject_rois = []
+#    rois_dict = {}
+    for r in roi_files:
+        _, roi_name = os.path.split(r)
+        roi_name, _ = os.path.splitext(roi_name)
+        subject_rois.append(roi_name)
+#        rois_dict[roi_name] = r
+#        subject_rois.append(rois_dict)
     return subject_rois
 
 def load_dynacomp_roi_timeseries(subject_id, session='func1',
