@@ -18,16 +18,22 @@ def compute_pearson_connectivity(subject_id, group, session='func1',
                                  preprocessing_folder='pipeline_1',
                                  plot=True, save=True):
     """Returns Pearson correlation coefficient for a subject_id
-    """    
+    """
+    
+    # load timeseries
     ts = load_dynacomp_roi_timeseries(subject_id, session=session,
                                       preprocessing_folder=preprocessing_folder)
+    # load rois
     roi_names, roi_coords = load_roi_names_and_coords(subject_id)
+
+    # pearson correlation    
     pc = np.corrcoef(ts.T)
 
     if plot:
-        title = subject_id + ' - ' + group 
+        title = subject_id + ' - ' + group
+        # plot matrix
         output_file = os.path.join(set_figure_base_dir('connectivity'),
-                                   '_'.join(['matrix', group, subject_id]))
+                                   '_'.join(['matrix', group, '1', subject_id]))
         plt.figure(figsize=(8, 8))
         plt.imshow(pc, cmap=cm.bwr, interpolation='nearest',
                    vmin=-1, vmax=1)
@@ -38,11 +44,12 @@ def compute_pearson_connectivity(subject_id, group, session='func1',
         plt.title(subject_id, fontsize=20)
         plt.tight_layout()
         plt.savefig(output_file)
+        
+        # plot connectome
         output_file = os.path.join(set_figure_base_dir('connectivity'),
-                                   '_'.join(['connectome', group, subject_id]))
-        plt.figure()
-        plot_connectome(pc, roi_coords, edge_threshold='80%', title=title,
-                        output_file=output_file)
+                                   '_'.join(['connectome', group, '1', subject_id]))
+        plt.figure(figsize=(10, 20), dpi=90)
+        plot_connectome(pc, roi_coords, edge_threshold='80%', title=title, output_file=output_file)
     return pc, roi_names, roi_coords
 
 
@@ -54,4 +61,3 @@ for i in range(len(dataset.subjects)):
     print dataset.subjects[i]
     pc, roi_names, roi_coords = compute_pearson_connectivity(dataset.subjects[i],
                                                              dataset.group[i])
-
