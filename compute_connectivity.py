@@ -18,7 +18,7 @@ def plot_connectivity_matrix(subject_id, group, pc, roi_names,
                              suffix, session='func1', save=True):
     """Plots connectivity matrix of pc
     """
-    title = subject_id + ' - ' + group
+    title = '-'.join([suffix, group, subject_id])
     # plot matrix
     output_file = os.path.join(set_figure_base_dir('connectivity'),
                                '_'.join([suffix, 'matrix', group,
@@ -40,7 +40,7 @@ def plot_connectivity_glassbrain(subject_id, group, pc, roi_coords,
                                  suffix, session='func1', save=True):
     """Plots connectome of pc
     """
-    title = subject_id + ' - ' + group
+    title = '-'.join([suffix, group, subject_id])
     output_file = os.path.join(set_figure_base_dir('connectivity'),
                                '_'.join([suffix, 'connectome', group,
                                          str(session), subject_id]))
@@ -96,7 +96,7 @@ def compute_graph_lasso_covariance(subject_id, group, session='func1',
                                  roi_names, 'gl_precision', save)
         sparsity = (gl.precision_ == 0)
         plot_connectivity_matrix(subject_id, group, sparsity,
-                                 roi_names, 'gsc_sparsity', save)
+                                 roi_names, 'gl_sparsity', save)
 
 
         plot_connectivity_glassbrain(subject_id, group, gl.covariance_,
@@ -148,7 +148,8 @@ dataset = load_dynacomp()
 for i in range(len(dataset.subjects)):
     print dataset.subjects[i]
     pc, roi_names, roi_coords = compute_pearson_connectivity(dataset.subjects[i],
-                                                             dataset.group[i])    
+                                                             dataset.group[i])
     compute_graph_lasso_covariance(dataset.subjects[i], dataset.group[i])
+    break
 
-compute_group_sparse_covariance(dataset)
+#compute_group_sparse_covariance(dataset)
