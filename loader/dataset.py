@@ -34,6 +34,12 @@ def set_data_base_dir(folder):
     """
     return os.path.join(set_base_dir(), folder)
 
+
+def set_figure_base_dir(subdir=''):
+    """ base_dir + figure + subdir
+    """
+    return os.path.join(set_data_base_dir('Dynacomp/figures'), subdir)
+
 def set_group_indices(group):
     """Returns indices for each clinical group
     """
@@ -62,21 +68,21 @@ def load_dynacomp_rois():
         subject_rois.append(rois_dict)
     return subject_rois
 
-def load_roi_names(subject_id):
+def load_roi_names_and_coords(subject_id):
     """ Returns paths of Dynacomp ROIs
     """
     ROI_DIR = set_data_base_dir('Dynacomp/rois')
     subject_path = os.path.join(ROI_DIR, subject_id)
     roi_files = sorted(glob.glob(os.path.join(subject_path, '*.nii')))
+    roi_dict = np.load(os.path.join(subject_path, 'rois_coords.npy')).all()
+    roi_coords = []
     subject_rois = []
-#    rois_dict = {}
     for r in roi_files:
         _, roi_name = os.path.split(r)
         roi_name, _ = os.path.splitext(roi_name)
         subject_rois.append(roi_name)
-#        rois_dict[roi_name] = r
-#        subject_rois.append(rois_dict)
-    return subject_rois
+        roi_coords.append(roi_dict[roi_name])
+    return subject_rois, roi_coords
 
 def load_dynacomp_roi_timeseries(subject_id, session='func1',
                                  preprocessing_folder='pipeline_1'):
@@ -101,7 +107,8 @@ def get_behavior_scores(description, subject_id):
             behav[key] = d[key][0]
     return behav
     
-
+    
+    
 def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     """ Returns paths of Dynacomp preprocessed resting-state fMRI
     """
