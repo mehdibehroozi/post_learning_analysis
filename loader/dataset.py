@@ -49,6 +49,32 @@ def set_group_indices(group):
         idx[g] = np.where(group == g)[0]
     return idx
 
+
+def load_dynacomp_pc(subject_id, session='func1'):
+    """ Loads of Dynacomp ROIs
+    """
+    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+    filename = os.path.join(CONN_DIR, subject_id, 'pc_' + session + '.npz')
+    print filename
+    data = np.load(filename)
+    return data
+
+def load_dynacomp_gl(subject_id, session='func1'):
+    """ Loads of Dynacomp ROIs
+    """
+    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+    filename = os.path.join(CONN_DIR, subject_id, 'gl_' + session + '.npz')
+    data = np.load(filename)
+    return data
+
+def load_dynacomp_gsc(subject_id, session='func1'):
+    """ Loads of Dynacomp ROIs
+    """
+    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+    filename = os.path.join(CONN_DIR, subject_id, 'gsc_' + session + '.npz')
+    data = np.load(filename)
+    return data
+
 def load_dynacomp_rois():
     """ Returns paths of Dynacomp ROIs
     """
@@ -94,7 +120,7 @@ def load_dynacomp_roi_timeseries(subject_id, session='func1',
     func_rois = os.path.join(subject_path, 'fMRI', 'acquisition1',
                              session + '_rois_no_filter.npy')
     ts_rois = np.load(func_rois)
-    return ts_rois    
+    return ts_rois
 
 def get_behavior_scores(description, subject_id):
     """ Returns behavioral scores of a subject_id
