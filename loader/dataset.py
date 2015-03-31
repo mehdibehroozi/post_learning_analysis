@@ -55,7 +55,6 @@ def load_dynacomp_pc(subject_id, session='func1'):
     """
     CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
     filename = os.path.join(CONN_DIR, subject_id, 'pc_' + session + '.npz')
-    print filename
     data = np.load(filename)
     return data
 

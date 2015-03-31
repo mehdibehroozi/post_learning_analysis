@@ -179,11 +179,12 @@ def compute_group_sparse_covariance(dataset, session='func1',
 dataset = load_dynacomp()
 
 for session_i in ['func1', 'func2']:
-#    for i in range(len(dataset.subjects)):
-#        print dataset.subjects[i], session_i
+    for i in range(len(dataset.subjects)):
+        print dataset.subjects[i], session_i
 #        compute_pearson_connectivity(dataset.subjects[i], dataset.group[i], plot=False,
 #                                     save=False, session=session_i, save_file=False)
-#        compute_graph_lasso_covariance(dataset.subjects[i], dataset.group[i], plot=True,
-#                                       save=True, session=session_i, save_file=False)
-    compute_group_sparse_covariance(dataset, save=False, plot=False,
-                                    session=session_i, save_file=False)
+        compute_graph_lasso_covariance(dataset.subjects[i], dataset.group[i], plot=True,
+                                       save=False, session=session_i, save_file=False)
+        break
+#    compute_group_sparse_covariance(dataset, save=False, plot=False,
+#                                    session=session_i, save_file=False)
