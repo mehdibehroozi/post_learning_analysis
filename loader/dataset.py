@@ -123,7 +123,8 @@ def load_dynacomp_roi_timeseries(subject_id, session='func1',
 
 def load_dynacomp_msdl_timeseries(subject_id, session='func1',
                                  preprocessing_folder='pipeline_1'):
-    """ Returns fMRI signal associated with each ROIs
+    """ Returns fMRI signal associated with each ROIs associate with MSDL
+        atlas
     """
     BASE_DIR = set_data_base_dir('Dynacomp')
     SUBJ_DIR = os.path.join(BASE_DIR, 'preprocessed', preprocessing_folder)
