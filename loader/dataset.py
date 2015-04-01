@@ -49,30 +49,47 @@ def set_group_indices(group):
         idx[g] = np.where(group == g)[0]
     return idx
 
-
-def load_dynacomp_pc(subject_id, session='func1'):
-    """ Loads of Dynacomp ROIs
+def load_dynacomp_fc(subject_id, session='func1', metric='pc', msdl=True):
+    """ Loads of Dynacomp FC results depending on the FC metrics
     """
     CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
-    filename = os.path.join(CONN_DIR, subject_id, 'pc_' + session + '.npz')
+    if msdl == True:
+        filename = os.path.join(CONN_DIR, subject_id, metric + '_' + session +
+                                                  '_msdl.npz')
+#        print filename
+    else:
+        filename = os.path.join(CONN_DIR, subject_id, metric + '_' + session +
+                                                  '.npz')
     data = np.load(filename)
+    if metric == 'gl' or metric == 'gsc':
+        data = data['covariance']
+    else:
+        data = data['correlation']
     return data
 
-def load_dynacomp_gl(subject_id, session='func1'):
-    """ Loads of Dynacomp ROIs
-    """
-    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
-    filename = os.path.join(CONN_DIR, subject_id, 'gl_' + session + '.npz')
-    data = np.load(filename)
-    return data
-
-def load_dynacomp_gsc(subject_id, session='func1'):
-    """ Loads of Dynacomp ROIs
-    """
-    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
-    filename = os.path.join(CONN_DIR, subject_id, 'gsc_' + session + '.npz')
-    data = np.load(filename)
-    return data
+#def load_dynacomp_pc(subject_id, session='func1'):
+#    """ Loads of Dynacomp ROIs
+#    """
+#    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+#    filename = os.path.join(CONN_DIR, subject_id, 'pc_' + session + '.npz')
+#    data = np.load(filename)
+#    return data
+#
+#def load_dynacomp_gl(subject_id, session='func1'):
+#    """ Loads of Dynacomp ROIs
+#    """
+#    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+#    filename = os.path.join(CONN_DIR, subject_id, 'gl_' + session + '.npz')
+#    data = np.load(filename)
+#    return data
+#
+#def load_dynacomp_gsc(subject_id, session='func1'):
+#    """ Loads of Dynacomp ROIs
+#    """
+#    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+#    filename = os.path.join(CONN_DIR, subject_id, 'gsc_' + session + '.npz')
+#    data = np.load(filename)
+#    return data
 
 def load_dynacomp_rois():
     """ Returns paths of Dynacomp ROIs
@@ -115,7 +132,7 @@ def load_msdl_names_and_coords():
     """
     atlas = fetch_msdl_atlas()
     roi_coords = np.loadtxt(atlas['labels'], dtype=np.float,
-                            delimiter=',\t', skiprows=1, usecols=(0,1,2))
+                            delimiter=',', skiprows=1, usecols=(0,1,2))
 
     roi_names = np.loadtxt(atlas['labels'], dtype=np.str,
                             delimiter=',', skiprows=1, usecols=(3,))

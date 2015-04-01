@@ -8,8 +8,9 @@ Created on Mon Mar 30 23:51:49 2015
 import os
 import numpy as np
 from nilearn.mass_univariate import permuted_ols
-from loader import load_dynacomp_pc, load_dynacomp, load_roi_names_and_coords,\
-                    load_dynacomp_gl, load_dynacomp_gsc
+from loader import load_dynacomp_fc, load_dynacomp, load_roi_names_and_coords
+from loader import load_msdl_names_and_coords
+#                    load_dynacomp_gl, load_dynacomp_gsc
 from loader import set_figure_base_dir
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -27,17 +28,18 @@ def mean_coords(dataset):
     mean_coords = np.mean(mean_coords, axis=0)
     return roi_names, mean_coords 
 
-def load_connectivity(dataset, session='func1', connectivity='pc'):
+def load_connectivity(dataset, session='func1', connectivity='pc', msdl=True):
     """Returns the connectivity of all the subjects
     """
     conn_all = []
     for i in range(len(dataset.subjects)):
-        if connectivity == 'gl':
-            cc = load_dynacomp_gl(dataset.subjects[i], session=session)['covariance']
-        elif connectivity == 'gsc':
-            cc = load_dynacomp_gsc(dataset.subjects[i], session=session)['covariance']
-        else:
-            cc = load_dynacomp_pc(dataset.subjects[i], session=session)['correlation']
+        cc = load_dynacomp_fc(dataset.subjects[i], session=session,
+                             metric=connectivity, msdl=msdl)
+#            cc = load_dynacomp_gl(dataset.subjects[i], session=session)['covariance']
+#        elif connectivity == 'gsc':
+#            cc = load_dynacomp_gsc(dataset.subjects[i], session=session)['covariance']
+#        else:
+#            cc = load_dynacomp_pc(dataset.subjects[i], session=session)['correlation']
         
         pc = cc[ind]
         conn_all.append(pc)
@@ -48,7 +50,7 @@ def load_connectivity(dataset, session='func1', connectivity='pc'):
 def one_sample_ttest(metric, threshold=3.66, session='func1'):
     """Plots one sample ttest per group
     """
-    n_rois = len(dataset.rois[0])    
+#    n_rois = len(dataset.rois[0])    
     for group in np.unique(dataset.group):
         pc_group = pc_all[dataset.group_indices[group], :]
         tv, pv = ttest_1samp(pc_group, 0.)
@@ -59,10 +61,10 @@ def one_sample_ttest(metric, threshold=3.66, session='func1'):
         pv[ind_threshold] = 0
         
         pc_group_mean = np.mean(pc_group, axis=0)
-        if connectivity == 'pc':
+        if metric == 'pc':
             pc_group_mean /= np.std(pc_group, axis=0)
         pc_group_mean[ind_threshold] = 0
-
+        n_rois = len(roi_names)
         t = np.zeros((n_rois, n_rois))
         t[ind] = pc_group_mean
         # plot connectivity matrix
@@ -84,6 +86,7 @@ def one_sample_ttest(metric, threshold=3.66, session='func1'):
                                    + group + '_' + metric)
         t = (t + t.T) / 2
         plt.figure(figsize=(10, 20), dpi=90)
+#        print t.shape, roi_coords
         plot_connectome(t, roi_coords, edge_threshold='85%',
                         title=group + '_' + session + '(-log p-val=' + \
                         str(threshold) +')', output_file=output_file)
@@ -186,12 +189,16 @@ def permuted_two_sample_ttest():
 ##############################################################################
 # Load data and extract only
 dataset = load_dynacomp()
-roi_names, roi_coords = mean_coords(dataset)
+
+#Switch  between subject-dependent ROIs and MSDL atlas
+#roi_names, roi_coords = mean_coords(dataset)
+# Roi names
+#roi_names = sorted(dataset.rois[0].keys())
+roi_names, roi_coords = load_msdl_names_and_coords()
 
 # Lower diagonal
-ind = np.tril_indices(len(dataset.rois[0].keys()), k=-1)
-# Roi names
-roi_names = sorted(dataset.rois[0].keys())
+#ind = np.tril_indices(len(dataset.rois[0].keys()), k=-1)
+ind = np.tril_indices(len(roi_names), k=-1)
 
 session = 'func1'
 #session = 'func2'
@@ -207,15 +214,18 @@ nb_rois = len(roi_names)
 sessions = ['func1','func2']
 pc_allsess = np.zeros([len(sessions),len(dataset.subjects),
                        nb_rois*(nb_rois-1)/2.],dtype='float64')
-for s in range(len(sessions)):
-    pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric)
-pc_all = np.mean(pc_allsess,axis=0)
+                       
+#for s in range(len(sessions)):
+#    pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric)
+##    pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], msdl=False)
+#pc_all = np.mean(pc_allsess,axis=0)
 
+pc_all = load_connectivity(dataset, 'func1', metric, msdl=True)
 # z-fisher 
 #pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
 #threshold = 3.66
 #one_sample_ttest(metric, threshold=1.3, session='avg')
 #two_sample_ttest(metric, threshold=1.3, session='avg')
-#one_sample_ttest(metric, session='avg')
-two_sample_ttest(metric, threshold=1.3, session='avg')
+one_sample_ttest(metric, session='avg')
+#two_sample_ttest(metric, threshold=1.3, session='avg')
 #permuted_two_sample_ttest()
