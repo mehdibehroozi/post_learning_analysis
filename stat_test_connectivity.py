@@ -222,22 +222,24 @@ def permuted_two_sample_ttest():
 ##############################################################################
 # Load data and extract only
 dataset = load_dynacomp()
-msdl = True
+#msdl = True
+msdl = False
 #Switch  between subject-dependent ROIs and MSDL atlas
-#roi_names, roi_coords = mean_coords(dataset)
+roi_names, roi_coords = mean_coords(dataset)
 # Roi names
-#roi_names = sorted(dataset.rois[0].keys())
-roi_names, roi_coords = load_msdl_names_and_coords()
+roi_names = sorted(dataset.rois[0].keys())
+#roi_names, roi_coords = load_msdl_names_and_coords()
 
 # Lower diagonal
 #ind = np.tril_indices(len(dataset.rois[0].keys()), k=-1)
 ind = np.tril_indices(len(roi_names), k=-1)
 
-session = 'func1'
+#session = 'func1'
 #session = 'func2'
+session = 'avg'
 metric = 'pc'
-#metric = 'gl' #graph-lasso
-#metric = 'gsc' #group sparse covariance
+metric = 'gl' #graph-lasso
+metric = 'gsc' #group sparse covariance
 
 
 # Load correlations
@@ -247,18 +249,20 @@ nb_rois = len(roi_names)
 sessions = ['func1','func2']
 pc_allsess = np.zeros([len(sessions),len(dataset.subjects),
                        nb_rois*(nb_rois-1)/2.],dtype='float64')
-                       
-#for s in range(len(sessions)):
-#    pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric)
-##    pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], msdl=False)
-#pc_all = np.mean(pc_allsess,axis=0)
 
-pc_all = load_connectivity(dataset, 'func1', metric, msdl)
+if session == 'avg':
+    for s in range(len(sessions)):
+        pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric,
+                                              msdl)
+    pc_all = np.mean(pc_allsess,axis=0)
+else:
+    pc_all = load_connectivity(dataset, session, metric, msdl)
+                       
 # z-fisher 
 #pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
 #threshold = 3.66
 #one_sample_ttest(metric, threshold=1.3, session='avg')
 #two_sample_ttest(metric, threshold=1.3, session='avg')
-one_sample_ttest(metric, session='avg')
-two_sample_ttest(metric, threshold=1.3, session='avg')
+one_sample_ttest(metric, threshold=1.3, session=session)
+two_sample_ttest(metric, threshold=1.3, session=session)
 #permuted_two_sample_ttest()
