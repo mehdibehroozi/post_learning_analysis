@@ -85,7 +85,8 @@ def one_sample_ttest(metric, threshold=3.66, session='func1'):
         t = (t + t.T) / 2
         plt.figure(figsize=(10, 20), dpi=90)
         plot_connectome(t, roi_coords, edge_threshold='85%',
-                        title=group + '_' + session, output_file=output_file)
+                        title=group + '_' + session + '(-log p-val=' + \
+                        str(threshold) +')', output_file=output_file)
 
 def two_sample_ttest(metric, threshold=3.66, session='func1'):
     """ Plots two sample ttest
@@ -110,7 +111,8 @@ def two_sample_ttest(metric, threshold=3.66, session='func1'):
             plt.figure(figsize=(8, 8))
             plt.imshow(p, interpolation='nearest', cmap=cm.hot)
             plt.colorbar()
-            plt.title(groups[i] + ' / ' + groups[j] + '_' + session, fontsize=20)
+            plt.title(groups[i] + ' / ' + groups[j] + '_' + session + 
+                      '(-log p-val=' + str(threshold) +')', fontsize=20)
             plt.xticks(range(len(roi_names)), roi_names,
                        rotation='vertical', fontsize=16)
             plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
@@ -129,7 +131,8 @@ def two_sample_ttest(metric, threshold=3.66, session='func1'):
             p = (p + p.T) / 2
             plt.figure(figsize=(10, 20), dpi=90)
             plot_connectome(p, roi_coords, edge_threshold='90%',
-                            title=groups[i] + ' / ' + groups[j] + '_' + session,
+                            title=groups[i] + ' / ' + groups[j] + '_' + \
+                            session + '(-log p-val=' + str(threshold) +')',
                             output_file=output_file)
 
 def permuted_two_sample_ttest():
@@ -211,6 +214,8 @@ pc_all = np.mean(pc_allsess,axis=0)
 # z-fisher 
 #pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
 #threshold = 3.66
-one_sample_ttest(metric, threshold=1.3, session='avg')
+#one_sample_ttest(metric, threshold=1.3, session='avg')
+#two_sample_ttest(metric, threshold=1.3, session='avg')
+#one_sample_ttest(metric, session='avg')
 two_sample_ttest(metric, threshold=1.3, session='avg')
 #permuted_two_sample_ttest()
