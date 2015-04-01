@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import nibabel as nib
 from sklearn.datasets.base import Bunch
-
+from nilearn.datasets import fetch_msdl_atlas
 def set_base_dir():
     """ base_dir
     """
@@ -108,6 +108,23 @@ def load_roi_names_and_coords(subject_id):
         subject_rois.append(roi_name)
         roi_coords.append(roi_dict[roi_name])
     return subject_rois, roi_coords
+
+
+def load_msdl_names_and_coords():
+    """ Returns msdl atlas ROIs
+    """
+    atlas = fetch_msdl_atlas()
+    roi_coords = np.loadtxt(atlas['labels'], dtype=np.float,
+                            delimiter=',\t', skiprows=1, usecols=(0,1,2))
+
+    roi_names = np.loadtxt(atlas['labels'], dtype=np.str,
+                            delimiter=',', skiprows=1, usecols=(3,))
+
+    for i in range(len(roi_names)):
+        roi_names[i] = roi_names[i].strip()
+    roi_names[-1] = roi_names[-1][:10]
+    roi_names[-2] = roi_names[-2][:10]
+    return roi_names, roi_coords
 
 def load_dynacomp_roi_timeseries(subject_id, session='func1',
                                  preprocessing_folder='pipeline_1'):

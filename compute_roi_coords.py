@@ -26,7 +26,7 @@ def compute_rois_coords(subject_id):
             filepath, _ = os.path.split(rois[key])
             print filepath
         np.save(os.path.join(filepath, 'rois_coords.npy') , roi_center)
-            
+
 
 for subject_id in dataset.subjects:
     compute_rois_coords(subject_id)
