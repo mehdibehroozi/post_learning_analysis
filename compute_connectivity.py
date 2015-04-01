@@ -114,10 +114,15 @@ def compute_graph_lasso_covariance(subject_id, group, session='func1',
     """Returns graph lasso covariance for a subject_id
     """
     # load timeseries
-    ts = load_dynacomp_roi_timeseries(subject_id, session=session,
-                                      preprocessing_folder=preprocessing_folder)
-    # load rois
-    roi_names, roi_coords = load_roi_names_and_coords(subject_id)
+    if msdl:
+        ts = load_dynacomp_msdl_timeseries(subject_id, session=session,
+                                          preprocessing_folder=preprocessing_folder)
+        roi_names, roi_coords = load_msdl_names_and_coords()
+    else:
+        ts = load_dynacomp_roi_timeseries(subject_id, session=session,
+                                          preprocessing_folder=preprocessing_folder)
+        # load rois
+        roi_names, roi_coords = load_roi_names_and_coords(subject_id)
 
     # compute covariance
     gl = covariance.GraphLassoCV(verbose=2)
@@ -154,18 +159,30 @@ def compute_group_sparse_covariance(dataset, session='func1',
                                     msdl=False):
     """Returns Group sparse covariance for all subjects
     """
+
     ts = []
-    for subject_id in dataset.subjects:
-        ts.append(load_dynacomp_roi_timeseries(subject_id, session=session,\
-                  preprocessing_folder=preprocessing_folder))
+    # load timeseries
+    if msdl:
+        for subject_id in dataset.subjects:
+            ts.append(load_dynacomp_msdl_timeseries(subject_id,\
+                      session=session, preprocessing_folder=preprocessing_folder))
+        roi_names, roi_coords = load_msdl_names_and_coords()
+    else:
+        for subject_id in dataset.subjects:
+            ts.append(load_dynacomp_roi_timeseries(subject_id, session=session,\
+                      preprocessing_folder=preprocessing_folder))
+        # load rois
+        roi_names, roi_coords = load_roi_names_and_coords(subject_id)
+
     gsc = GroupSparseCovarianceCV(verbose=2)
     gsc.fit(ts)
 
     if plot:
         for i in range(len(dataset.subjects)):
-            # load rois
-            roi_names,\
-            roi_coords = load_roi_names_and_coords(dataset.subjects[i])
+            if not msdl:
+                # load rois
+                roi_names,\
+                roi_coords = load_roi_names_and_coords(dataset.subjects[i])
 
             plot_connectivity_matrix(dataset.subjects[i], dataset.group[i],
                                      gsc.covariances_[..., i],
@@ -185,9 +202,10 @@ def compute_group_sparse_covariance(dataset, session='func1',
                                          roi_coords, 'gsc_covariance', session, save, msdl)
 
     for i in range(len(dataset.subjects)):
-        # load rois
-        roi_names,\
-        roi_coords = load_roi_names_and_coords(dataset.subjects[i])
+        if not msdl:
+            # load rois
+            roi_names,\
+            roi_coords = load_roi_names_and_coords(dataset.subjects[i])
         sparsity = (gsc.precisions_[..., i] == 0)            
         CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
         subject_id = dataset.subjects[i]
@@ -208,13 +226,16 @@ dataset = load_dynacomp()
 for session_i in ['func1', 'func2']:
     for i in range(len(dataset.subjects)):
         print dataset.subjects[i], session_i
-        compute_pearson_connectivity(dataset.subjects[i], dataset.group[i],
-                                     plot=True, save=True,
-                                     session=session_i, save_file=True,
-                                     msdl=True)
-    
-#        compute_graph_lasso_covariance(dataset.subjects[i], dataset.group[i], plot=True,
-#                                       save=False, session=session_i, save_file=False)
-                    
-#    compute_group_sparse_covariance(dataset, save=False, plot=False,
-#                                    session=session_i, save_file=False)
+#        compute_pearson_connectivity(dataset.subjects[i], dataset.group[i],
+#                                     plot=True, save=True,
+#                                     session=session_i, save_file=True,
+#                                     msdl=True)
+
+#        compute_graph_lasso_covariance(dataset.subjects[i], dataset.group[i],
+#                                       plot=True, save=True,
+#                                       session=session_i, save_file=True,
+#                                       msdl=True)
+
+    compute_group_sparse_covariance(dataset, save=True, plot=True,
+                                    session=session_i, save_file=True,
+                                    msdl=True)
