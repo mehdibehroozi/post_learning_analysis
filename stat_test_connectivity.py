@@ -34,13 +34,7 @@ def load_connectivity(dataset, session='func1', connectivity='pc', msdl=True):
     conn_all = []
     for i in range(len(dataset.subjects)):
         cc = load_dynacomp_fc(dataset.subjects[i], session=session,
-                             metric=connectivity, msdl=msdl)
-#            cc = load_dynacomp_gl(dataset.subjects[i], session=session)['covariance']
-#        elif connectivity == 'gsc':
-#            cc = load_dynacomp_gsc(dataset.subjects[i], session=session)['covariance']
-#        else:
-#            cc = load_dynacomp_pc(dataset.subjects[i], session=session)['correlation']
-        
+                             metric=connectivity, msdl=msdl)        
         pc = cc[ind]
         conn_all.append(pc)
     conn_all = np.array(conn_all)
@@ -71,30 +65,43 @@ def one_sample_ttest(metric, threshold=3.66, session='func1'):
         plt.figure(figsize=(8, 8))
         plt.imshow(t, interpolation='nearest', cmap=cm.hot)
         plt.colorbar()
-        plt.title(group + '_' + session + '(-log p-val=' + str(threshold) +')', fontsize=20)
+ 
+        title = group + '_' + session + '(-log p-val=' + str(threshold) +')'
+        if msdl:
+            title += '_msdl'
+        plt.title(title, fontsize=20)            
         plt.xticks(range(len(roi_names)), roi_names,
                    rotation='vertical', fontsize=16)
         plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
         output_file = os.path.join(set_figure_base_dir(), 'connectivity',
                                    'ttest_connectivity_' + session + '_' 
                                    + group + '_' + metric)#str(threshold)
+        if msdl:
+            output_file += '_msdl'
+
         plt.savefig(output_file)
     
         # plot connectome
         output_file = os.path.join(set_figure_base_dir(), 'connectivity',
                                    'ttest_connectome_'  + session + '_' 
                                    + group + '_' + metric)
+        if msdl:
+            output_file += '_msdl'
+
+
         t = (t + t.T) / 2
         plt.figure(figsize=(10, 20), dpi=90)
-#        print t.shape, roi_coords
+
+        title = group + '_' + session + '(-log p-val=' + str(threshold) +')'
+        if msdl:
+            title += '_msdl'
+
         plot_connectome(t, roi_coords, edge_threshold='85%',
-                        title=group + '_' + session + '(-log p-val=' + \
-                        str(threshold) +')', output_file=output_file)
+                        title=title, output_file=output_file)
 
 def two_sample_ttest(metric, threshold=3.66, session='func1'):
     """ Plots two sample ttest
     """
-#    n_rois = len(dataset.rois[0])
     n_rois = len(roi_names)
     groups = np.unique(dataset.group)
     for i in range(len(groups) - 1):
@@ -115,8 +122,13 @@ def two_sample_ttest(metric, threshold=3.66, session='func1'):
             plt.figure(figsize=(8, 8))
             plt.imshow(p, interpolation='nearest', cmap=cm.hot)
             plt.colorbar()
-            plt.title(groups[i] + ' / ' + groups[j] + '_' + session + 
-                      '(-log p-val=' + str(threshold) +')', fontsize=20)
+            title = groups[i] + ' / ' + groups[j] + '_' + session + \
+                    '(-log p-val=' + str(threshold) +')'
+                
+            if msdl:
+                title += '_msdl'
+                
+            plt.title(title, fontsize=20)
             plt.xticks(range(len(roi_names)), roi_names,
                        rotation='vertical', fontsize=16)
             plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
@@ -124,6 +136,9 @@ def two_sample_ttest(metric, threshold=3.66, session='func1'):
                                        'ttest2_connectivity_' + session + '_' + \
                                        groups[i] + ' _ ' + groups[j] + '_' +
                                        metric)
+            if msdl:
+                output_file += '_msdl'
+
             plt.savefig(output_file)
 
             # plot connectome
@@ -131,19 +146,23 @@ def two_sample_ttest(metric, threshold=3.66, session='func1'):
                                        'ttest2_connectome_' + session + '_' + \
                                        groups[i] + ' _ ' + groups[j] + '_' +
                                        metric)
+            if msdl:
+                output_file += '_msdl'
 
             p = (p + p.T) / 2
             plt.figure(figsize=(10, 20), dpi=90)
+            title = groups[i] + ' / ' + groups[j] + '_' + \
+                    session + '(-log p-val=' + str(threshold) +')'
+            if msdl:
+                title += '_msdl'
             plot_connectome(p, roi_coords, edge_threshold='90%',
-                            title=groups[i] + ' / ' + groups[j] + '_' + \
-                            session + '(-log p-val=' + str(threshold) +')',
+                            title=title,
                             output_file=output_file)
 
 def permuted_two_sample_ttest():
     """ plots permutation test
     """
     groups = np.unique(dataset.group)
-#    n_rois = len(dataset.rois[0])
     n_rois = len(roi_names)
     for i in range(len(groups) - 1):
         for j in range(i + 1, len(groups)):
@@ -167,31 +186,43 @@ def permuted_two_sample_ttest():
             plt.figure(figsize=(8, 8))
             plt.imshow(p, interpolation='nearest', cmap=cm.hot)
             plt.colorbar()
-            plt.title(groups[i] + ' / ' + groups[j] + '_' + session, fontsize=20)
+            
+            title = groups[i] + ' / ' + groups[j] + '_' + session
+            if msdl:
+                title += '_msdl'
+            plt.title(title, fontsize=20)
             plt.xticks(range(len(roi_names)), roi_names,
                        rotation='vertical', fontsize=16)
             plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
             output_file = os.path.join(set_figure_base_dir(), 'connectivity',
                                        'ttest2_perm_connectivity_' + session + '_' + \
                                        groups[i] + ' _ ' + groups[j])
+            if msdl:
+                output_file += '_msdl'
+
             plt.savefig(output_file)
             # plot connectome
             output_file = os.path.join(set_figure_base_dir(), 'connectivity',
                                        'ttest2_perm_connectome_' + session + '_' + \
                                        groups[i] + ' _ ' + groups[j])
+            if msdl:
+                output_file += '_msdl'
 
             # make a symmetric matrix
             p = (p + p.T) / 2
             plt.figure(figsize=(10, 20), dpi=90)
+            title = groups[i] + ' / ' + groups[j] + '_' + session
+            if msdl:
+                title += '_msdl'
             plot_connectome(p, roi_coords, edge_threshold='90%',
-                            title=groups[i] + ' / ' + groups[j] + '_' + session,
+                            title=title,
                             output_file=output_file)
 
 
 ##############################################################################
 # Load data and extract only
 dataset = load_dynacomp()
-
+msdl = True
 #Switch  between subject-dependent ROIs and MSDL atlas
 #roi_names, roi_coords = mean_coords(dataset)
 # Roi names
@@ -222,7 +253,7 @@ pc_allsess = np.zeros([len(sessions),len(dataset.subjects),
 ##    pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], msdl=False)
 #pc_all = np.mean(pc_allsess,axis=0)
 
-pc_all = load_connectivity(dataset, 'func1', metric, msdl=True)
+pc_all = load_connectivity(dataset, 'func1', metric, msdl)
 # z-fisher 
 #pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
 #threshold = 3.66
