@@ -45,7 +45,7 @@ def load_connectivity(dataset, session='func1', connectivity='pc'):
     return conn_all
 
 
-def one_sample_ttest(metric):
+def one_sample_ttest(metric, threshold=3.66, session='func1'):
     """Plots one sample ttest per group
     """
     n_rois = len(dataset.rois[0])    
@@ -55,7 +55,7 @@ def one_sample_ttest(metric):
         pv = -np.log10(pv)
 
 #        ind_threshold = np.where(pv < 3.67)
-        ind_threshold = np.where(pv < 1.3)
+        ind_threshold = np.where(pv < threshold)
         pv[ind_threshold] = 0
         
         pc_group_mean = np.mean(pc_group, axis=0)
@@ -69,24 +69,25 @@ def one_sample_ttest(metric):
         plt.figure(figsize=(8, 8))
         plt.imshow(t, interpolation='nearest', cmap=cm.hot)
         plt.colorbar()
-        plt.title(group + '_' + session, fontsize=20)
+        plt.title(group + '_' + session + '(-log p-val=' + str(threshold) +')', fontsize=20)
         plt.xticks(range(len(roi_names)), roi_names,
                    rotation='vertical', fontsize=16)
         plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
         output_file = os.path.join(set_figure_base_dir(), 'connectivity',
                                    'ttest_connectivity_' + session + '_' 
-                                   + group + '_' + metric)
+                                   + group + '_' + metric)#str(threshold)
         plt.savefig(output_file)
     
         # plot connectome
         output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                   'ttest_connectome_' + session + '_' + group)
+                                   'ttest_connectome_'  + session + '_' 
+                                   + group + '_' + metric)
         t = (t + t.T) / 2
         plt.figure(figsize=(10, 20), dpi=90)
         plot_connectome(t, roi_coords, edge_threshold='85%',
                         title=group + '_' + session, output_file=output_file)
 
-def two_sample_ttest():
+def two_sample_ttest(metric, threshold=3.66, session='func1'):
     """ Plots two sample ttest
     """
     n_rois = len(dataset.rois[0])
@@ -99,7 +100,7 @@ def two_sample_ttest():
             tv, pv = ttest_ind(pc_group_1, pc_group_2)
             pv = -np.log10(pv)
     
-            ind_threshold = np.where(pv < 1.3)
+            ind_threshold = np.where(pv < threshold)
             pv[ind_threshold] = 0
             
             p = np.zeros((n_rois, n_rois))
@@ -115,13 +116,15 @@ def two_sample_ttest():
             plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
             output_file = os.path.join(set_figure_base_dir(), 'connectivity',
                                        'ttest2_connectivity_' + session + '_' + \
-                                       groups[i] + ' _ ' + groups[j])
+                                       groups[i] + ' _ ' + groups[j] + '_' +
+                                       metric)
             plt.savefig(output_file)
 
             # plot connectome
             output_file = os.path.join(set_figure_base_dir(), 'connectivity',
                                        'ttest2_connectome_' + session + '_' + \
-                                       groups[i] + ' _ ' + groups[j])
+                                       groups[i] + ' _ ' + groups[j] + '_' +
+                                       metric)
 
             p = (p + p.T) / 2
             plt.figure(figsize=(10, 20), dpi=90)
@@ -188,17 +191,26 @@ ind = np.tril_indices(len(dataset.rois[0].keys()), k=-1)
 roi_names = sorted(dataset.rois[0].keys())
 
 session = 'func1'
-#metric = 'pc'
-metric = 'gl' #graph-lasso
+#session = 'func2'
+metric = 'pc'
+#metric = 'gl' #graph-lasso
 #metric = 'gsc' #group sparse covariance
 
 
 # Load correlations
-pc_all = load_connectivity(dataset, session, metric)
+#pc_all = load_connectivity(dataset, session, metric)
+nb_rois = len(roi_names)
+
+sessions = ['func1','func2']
+pc_allsess = np.zeros([len(sessions),len(dataset.subjects),
+                       nb_rois*(nb_rois-1)/2.],dtype='float64')
+for s in range(len(sessions)):
+    pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric)
+pc_all = np.mean(pc_allsess,axis=0)
 
 # z-fisher 
 #pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
-
-one_sample_ttest(metric)
-#two_sample_ttest()
+#threshold = 3.66
+one_sample_ttest(metric, threshold=1.3, session='avg')
+two_sample_ttest(metric, threshold=1.3, session='avg')
 #permuted_two_sample_ttest()
