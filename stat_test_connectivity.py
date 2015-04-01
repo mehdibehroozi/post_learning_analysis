@@ -94,7 +94,8 @@ def one_sample_ttest(metric, threshold=3.66, session='func1'):
 def two_sample_ttest(metric, threshold=3.66, session='func1'):
     """ Plots two sample ttest
     """
-    n_rois = len(dataset.rois[0])
+#    n_rois = len(dataset.rois[0])
+    n_rois = len(roi_names)
     groups = np.unique(dataset.group)
     for i in range(len(groups) - 1):
         for j in range(i + 1, len(groups)):
@@ -142,7 +143,8 @@ def permuted_two_sample_ttest():
     """ plots permutation test
     """
     groups = np.unique(dataset.group)
-    n_rois = len(dataset.rois[0])
+#    n_rois = len(dataset.rois[0])
+    n_rois = len(roi_names)
     for i in range(len(groups) - 1):
         for j in range(i + 1, len(groups)):
             pc_group_1 = pc_all[dataset.group_indices[groups[i]], :]
@@ -227,5 +229,5 @@ pc_all = load_connectivity(dataset, 'func1', metric, msdl=True)
 #one_sample_ttest(metric, threshold=1.3, session='avg')
 #two_sample_ttest(metric, threshold=1.3, session='avg')
 one_sample_ttest(metric, session='avg')
-#two_sample_ttest(metric, threshold=1.3, session='avg')
+two_sample_ttest(metric, threshold=1.3, session='avg')
 #permuted_two_sample_ttest()
