@@ -45,7 +45,7 @@ def load_connectivity(dataset, session='func1', connectivity='pc'):
     return conn_all
 
 
-def one_sample_ttest():
+def one_sample_ttest(metric):
     """Plots one sample ttest per group
     """
     n_rois = len(dataset.rois[0])    
@@ -54,7 +54,8 @@ def one_sample_ttest():
         tv, pv = ttest_1samp(pc_group, 0.)
         pv = -np.log10(pv)
 
-        ind_threshold = np.where(pv < 3.67)
+#        ind_threshold = np.where(pv < 3.67)
+        ind_threshold = np.where(pv < 1.3)
         pv[ind_threshold] = 0
         
         pc_group_mean = np.mean(pc_group, axis=0)
@@ -68,12 +69,13 @@ def one_sample_ttest():
         plt.figure(figsize=(8, 8))
         plt.imshow(t, interpolation='nearest', cmap=cm.hot)
         plt.colorbar()
-        plt.title(title=group + '_' + session, fontsize=20)
+        plt.title(group + '_' + session, fontsize=20)
         plt.xticks(range(len(roi_names)), roi_names,
                    rotation='vertical', fontsize=16)
         plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
         output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                   'ttest_connectivity_' + session + '_' + group)
+                                   'ttest_connectivity_' + session + '_' 
+                                   + group + '_' + metric)
         plt.savefig(output_file)
     
         # plot connectome
@@ -186,14 +188,17 @@ ind = np.tril_indices(len(dataset.rois[0].keys()), k=-1)
 roi_names = sorted(dataset.rois[0].keys())
 
 session = 'func1'
-connectivity = 'pc'
+#metric = 'pc'
+metric = 'gl' #graph-lasso
+#metric = 'gsc' #group sparse covariance
+
 
 # Load correlations
-pc_all = load_connectivity(dataset, session, connectivity)
+pc_all = load_connectivity(dataset, session, metric)
 
 # z-fisher 
 #pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
 
-one_sample_ttest()
-two_sample_ttest()
-permuted_two_sample_ttest()
+one_sample_ttest(metric)
+#two_sample_ttest()
+#permuted_two_sample_ttest()
