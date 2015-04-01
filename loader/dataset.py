@@ -121,6 +121,18 @@ def load_dynacomp_roi_timeseries(subject_id, session='func1',
     ts_rois = np.load(func_rois)
     return ts_rois
 
+def load_dynacomp_msdl_timeseries(subject_id, session='func1',
+                                 preprocessing_folder='pipeline_1'):
+    """ Returns fMRI signal associated with each ROIs
+    """
+    BASE_DIR = set_data_base_dir('Dynacomp')
+    SUBJ_DIR = os.path.join(BASE_DIR, 'preprocessed', preprocessing_folder)
+    subject_path = os.path.join(SUBJ_DIR, subject_id)
+    func_rois = os.path.join(subject_path, 'fMRI', 'acquisition1',
+                             session + '_msdl_no_filter.npy')
+    ts_rois = np.load(func_rois)
+    return ts_rois
+
 def get_behavior_scores(description, subject_id):
     """ Returns behavioral scores of a subject_id
     """
@@ -131,9 +143,8 @@ def get_behavior_scores(description, subject_id):
         if not key in excluded_keys:
             behav[key] = d[key][0]
     return behav
-    
-    
-    
+
+
 def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     """ Returns paths of Dynacomp preprocessed resting-state fMRI
     """
