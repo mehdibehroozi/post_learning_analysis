@@ -228,7 +228,8 @@ msdl = False
 roi_names, roi_coords = mean_coords(dataset)
 # Roi names
 roi_names = sorted(dataset.rois[0].keys())
-#roi_names, roi_coords = load_msdl_names_and_coords()
+if msdl:
+    roi_names, roi_coords = load_msdl_names_and_coords()
 
 # Lower diagonal
 #ind = np.tril_indices(len(dataset.rois[0].keys()), k=-1)
