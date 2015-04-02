@@ -67,29 +67,6 @@ def load_dynacomp_fc(subject_id, session='func1', metric='pc', msdl=True):
         data = data['correlation']
     return data
 
-#def load_dynacomp_pc(subject_id, session='func1'):
-#    """ Loads of Dynacomp ROIs
-#    """
-#    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
-#    filename = os.path.join(CONN_DIR, subject_id, 'pc_' + session + '.npz')
-#    data = np.load(filename)
-#    return data
-#
-#def load_dynacomp_gl(subject_id, session='func1'):
-#    """ Loads of Dynacomp ROIs
-#    """
-#    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
-#    filename = os.path.join(CONN_DIR, subject_id, 'gl_' + session + '.npz')
-#    data = np.load(filename)
-#    return data
-#
-#def load_dynacomp_gsc(subject_id, session='func1'):
-#    """ Loads of Dynacomp ROIs
-#    """
-#    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
-#    filename = os.path.join(CONN_DIR, subject_id, 'gsc_' + session + '.npz')
-#    data = np.load(filename)
-#    return data
 
 def load_dynacomp_rois():
     """ Returns paths of Dynacomp ROIs
@@ -190,6 +167,8 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     description = pd.read_csv(os.path.join(BASE_DIR, 'subject_infos.csv'))
     session1_files = []
     session2_files = []
+    session1_motion = []
+    session2_motion = []
     anat_files = []
     group = []
     subjects = []
@@ -207,6 +186,13 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
         # anatomical data
         anat_files.append(glob.glob(os.path.join(f, 't1mri', 'acquisition1',
                                                  'wanat*.nii'))[0])
+
+        # motion parameters
+        session1_motion.append(glob.glob(os.path.join(f, 'fMRI', 'acquisition1',
+                                                      'rp_rest1*.txt'))[0])
+        session2_motion.append(glob.glob(os.path.join(f, 'fMRI', 'acquisition1',
+                                                      'rp_rest2*.txt'))[0])
+
         # subject group
         gr = description[description.NIP == subject_id].GROUP.values
         if len(gr) > 0:
@@ -223,8 +209,15 @@ def load_dynacomp(preprocessing_folder='pipeline_1', prefix='swr'):
     rois = load_dynacomp_rois()
     return Bunch(func1=session1_files,
                  func2=session2_files,
-                 anat=anat_files, group_indices=indices, rois=rois,
-                 group=group, subjects=subjects, date=date, behavior=behavior,
+                 anat=anat_files,
+                 group_indices=indices,
+                 motion1=session1_motion,
+                 motion2=session2_motion,
+                 rois=rois,
+                 group=group,
+                 subjects=subjects,
+                 date=date,
+                 behavior=behavior,
                  mask=mask_path)
  
 def array_to_niis(data, mask):
