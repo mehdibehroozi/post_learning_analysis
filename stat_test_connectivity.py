@@ -161,12 +161,7 @@ def two_sample_ttest(metric, threshold=3.66, session='func1'):
                             title=title,
                             output_file=output_file)
 
-        _, of = os.path.split(output_file)
-        np.save(of, p)
-
-
-
-def permuted_two_sample_ttest():
+def permuted_two_sample_ttest(metric, threshold=3.66, session='func1'):
     """ plots permutation test
     """
     groups = np.unique(dataset.group)
@@ -270,6 +265,6 @@ else:
 #threshold = 3.66
 #one_sample_ttest(metric, threshold=1.3, session='avg')
 #two_sample_ttest(metric, threshold=1.3, session='avg')
-one_sample_ttest(metric, threshold=1.3, session=session)
+#one_sample_ttest(metric, threshold=1.3, session=session)
 two_sample_ttest(metric, threshold=1.3, session=session)
-#permuted_two_sample_ttest()
+#permuted_two_sample_ttest(metric, threshold=1.3, session=session)
