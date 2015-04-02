@@ -98,6 +98,8 @@ def one_sample_ttest(metric, threshold=3.66, session='func1'):
 
         plot_connectome(t, roi_coords, edge_threshold='85%',
                         title=title, output_file=output_file)
+        _, of = os.path.split(output_file)
+        np.save(of, t)
 
 def two_sample_ttest(metric, threshold=3.66, session='func1'):
     """ Plots two sample ttest
@@ -158,6 +160,11 @@ def two_sample_ttest(metric, threshold=3.66, session='func1'):
             plot_connectome(p, roi_coords, edge_threshold='90%',
                             title=title,
                             output_file=output_file)
+
+        _, of = os.path.split(output_file)
+        np.save(of, p)
+
+
 
 def permuted_two_sample_ttest():
     """ plots permutation test
@@ -223,7 +230,7 @@ def permuted_two_sample_ttest():
 # Load data and extract only
 dataset = load_dynacomp()
 #msdl = True
-msdl = False
+msdl = True
 #Switch  between subject-dependent ROIs and MSDL atlas
 roi_names, roi_coords = mean_coords(dataset)
 # Roi names
@@ -238,10 +245,9 @@ ind = np.tril_indices(len(roi_names), k=-1)
 #session = 'func1'
 #session = 'func2'
 session = 'avg'
-metric = 'pc'
-metric = 'gl' #graph-lasso
-metric = 'gsc' #group sparse covariance
-
+metric = 'pc' # correlation
+#metric = 'gl' #graph-lasso
+#metric = 'gsc' #group sparse covariance
 
 # Load correlations
 #pc_all = load_connectivity(dataset, session, metric)
