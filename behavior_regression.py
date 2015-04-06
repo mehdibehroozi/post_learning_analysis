@@ -12,12 +12,16 @@ from sklearn.linear_model import RidgeCV, LassoCV
 from sklearn.svm import SVR
 from sklearn.learning_curve import learning_curve
 import matplotlib.pyplot as plt
-
+from sklearn.feature_selection import SelectKBest
 
 
 def regression_learning_curves(X, y, behav_name=''):
     """ Computes and plots learning curves of regression models of X and y
     """    
+
+    # Feature selection
+#    skb = SelectKBest()
+#    X = skb.fit_transform(X, y)
     
     # Ridge Regression
     rdg = RidgeCV(alphas=np.logspace(-3, 3, 7))
