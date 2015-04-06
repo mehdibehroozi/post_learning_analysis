@@ -275,13 +275,8 @@ def permuted_two_sample_ttest(fc_all, metric, threshold=0.05, session='func1',
 ##############################################################################
 # Load data and extract only
 dataset = load_dynacomp()
-<<<<<<< HEAD
-#msdl = True
-msdl = True
-=======
 msdl = True
 #msdl = False
->>>>>>> master
 #Switch  between subject-dependent ROIs and MSDL atlas
 roi_names, roi_coords = mean_coords(dataset)
 # Roi names
@@ -295,12 +290,6 @@ ind = np.tril_indices(len(roi_names), k=-1)
 
 #session = 'func1'
 #session = 'func2'
-<<<<<<< HEAD
-session = 'avg'
-metric = 'pc' # correlation
-#metric = 'gl' #graph-lasso
-#metric = 'gsc' #group sparse covariance
-=======
 #session = 'avg'
 #metric = 'pc'
 #metric = 'gl' #graph-lasso
@@ -308,7 +297,6 @@ metric = 'pc' # correlation
 
 metrics = ['pc', 'gl', 'gsc']
 metrics = ['gsc']
->>>>>>> master
 
 # Load correlations
 #pc_all = load_connectivity(dataset, session, metric)
@@ -319,24 +307,9 @@ fc_allsess = np.zeros([len(sessions),len(dataset.subjects),
                        nb_rois*(nb_rois-1)/2.], dtype='float64')
 
 for s in range(len(sessions)):
-    fc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], met, msdl)
+    fc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric, msdl)
 
-<<<<<<< HEAD
-if session == 'avg':
-    for s in range(len(sessions)):
-        pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric,
-                                              msdl)
-    pc_all = np.mean(pc_allsess,axis=0)
-else:
-    pc_all = load_connectivity(dataset, session, metric, msdl)
 
-#fisher_transform = False                        
-#threshold = 3.66
-#one_sample_ttest(metric, threshold=1.3, session='avg')
-#two_sample_ttest(metric, threshold=1.3, session='avg')
-#one_sample_ttest(metric, threshold=1.3, session=session)
-two_sample_ttest(metric, threshold=1.3, session=session)
-=======
 #if session == 'avg':
 #    for s in range(len(sessions)):
 #        pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric,
@@ -369,5 +342,4 @@ for met in metrics:
         else:
             one_sample_ttest(fc_all, met, threshold=0.05, session=sess)
             two_sample_ttest(fc_all, met, threshold=0.05, session=sess)
->>>>>>> master
 #permuted_two_sample_ttest(metric, threshold=1.3, session=session)
