@@ -14,6 +14,8 @@ import pandas as pd
 import nibabel as nib
 from sklearn.datasets.base import Bunch
 from nilearn.datasets import fetch_msdl_atlas
+from nilearn.signal import clean
+
 def set_base_dir():
     """ base_dir
     """
@@ -121,7 +123,8 @@ def load_msdl_names_and_coords():
     return roi_names, roi_coords
 
 def load_dynacomp_roi_timeseries(subject_id, session='func1',
-                                 preprocessing_folder='pipeline_1'):
+                                 preprocessing_folder='pipeline_1',
+                                 clean=False):
     """ Returns fMRI signal associated with each ROIs
     """
     BASE_DIR = set_data_base_dir('Dynacomp')
@@ -130,6 +133,14 @@ def load_dynacomp_roi_timeseries(subject_id, session='func1',
     func_rois = os.path.join(subject_path, 'fMRI', 'acquisition1',
                              session + '_rois_no_filter.npy')
     ts_rois = np.load(func_rois)
+    
+    if clean:
+        motion_path = glob.glob(\
+                      os.path.join(subject_path, 'fMRI',
+                                   'acquisition1',
+                                   'rp_rest' + session[-1] + '*.txt'))[0]
+        motion = np.loadtxt(motion_path)
+        ts_rois = clean_timeserie(ts_rois, motion)
     return ts_rois
 
 def load_dynacomp_msdl_timeseries(subject_id, session='func1',
@@ -144,6 +155,14 @@ def load_dynacomp_msdl_timeseries(subject_id, session='func1',
                              session + '_msdl_no_filter.npy')
     ts_rois = np.load(func_rois)
     return ts_rois
+
+
+def clean_timeserie(ts, motion):
+    """ Returns cleaned timeserie
+    """
+    return clean(ts, detrend=False, standardize=False,
+                high_pass=None, low_pass=.1, t_r=1.05,
+                confounds=motion)
 
 def get_behavior_scores(description, subject_id):
     """ Returns behavioral scores of a subject_id

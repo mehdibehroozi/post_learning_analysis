@@ -10,13 +10,17 @@ import numpy as np
 from nilearn.mass_univariate import permuted_ols
 from loader import load_dynacomp_fc, load_dynacomp, load_roi_names_and_coords
 from loader import load_msdl_names_and_coords
-#                    load_dynacomp_gl, load_dynacomp_gsc
 from loader import set_figure_base_dir
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from nilearn.plotting import plot_connectome
 from scipy.stats import ttest_1samp, ttest_ind
 
+
+def fisher_transform(corr):
+    """ Returns fisher transform of correlations
+    """
+    return np.arctanh(corr)
 
 def mean_coords(dataset):
     """Returns mean roi coords
@@ -46,6 +50,9 @@ def one_sample_ttest(metric, threshold=3.66, session='func1'):
     """
 #    n_rois = len(dataset.rois[0])    
     for group in np.unique(dataset.group):
+        if metric == 'pc' and False:
+            pc_all = np.arctanh(pc_all) # Fisher transform
+            
         pc_group = pc_all[dataset.group_indices[group], :]
         tv, pv = ttest_1samp(pc_group, 0.)
         pv = -np.log10(pv)
@@ -259,9 +266,8 @@ if session == 'avg':
     pc_all = np.mean(pc_allsess,axis=0)
 else:
     pc_all = load_connectivity(dataset, session, metric, msdl)
-                       
-# z-fisher 
-#pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
+
+#fisher_transform = False                        
 #threshold = 3.66
 #one_sample_ttest(metric, threshold=1.3, session='avg')
 #two_sample_ttest(metric, threshold=1.3, session='avg')

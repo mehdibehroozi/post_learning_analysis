@@ -9,7 +9,7 @@ import numpy as np
 from loader import load_dynacomp, load_dynacomp_roi_timeseries, \
                    load_roi_names_and_coords, set_figure_base_dir,\
                    set_data_base_dir, load_dynacomp_msdl_timeseries, \
-                   load_msdl_names_and_coords
+                   load_msdl_names_and_coords, clean_timeserie
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from nilearn.plotting import plot_connectome
@@ -103,7 +103,6 @@ def compute_pearson_connectivity(subject_id, group, session='func1',
             output_file += '_msdl'
         np.savez(output_file, correlation=pc,
                  roi_names=roi_names, roi_coords=roi_coords)
-
     return pc, roi_names, roi_coords
 
 
@@ -226,16 +225,18 @@ dataset = load_dynacomp()
 for session_i in ['func1', 'func2']:
     for i in range(len(dataset.subjects)):
         print dataset.subjects[i], session_i
-#        compute_pearson_connectivity(dataset.subjects[i], dataset.group[i],
-#                                     plot=True, save=True,
-#                                     session=session_i, save_file=True,
-#                                     msdl=True)
+        compute_pearson_connectivity(dataset.subjects[i], dataset.group[i],
+                                     plot=False, save=False,
+                                     session=session_i, save_file=False,
+                                     msdl=True)
+        break
+    break
 
 #        compute_graph_lasso_covariance(dataset.subjects[i], dataset.group[i],
 #                                       plot=True, save=True,
 #                                       session=session_i, save_file=True,
 #                                       msdl=True)
 
-    compute_group_sparse_covariance(dataset, save=True, plot=True,
-                                    session=session_i, save_file=True,
-                                    msdl=True)
+#    compute_group_sparse_covariance(dataset, save=True, plot=True,
+#                                    session=session_i, save_file=True,
+#                                    msdl=True)
