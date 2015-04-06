@@ -23,7 +23,7 @@ def fisher_transform(corr):
     return np.arctanh(corr)
 
 def mean_coords(dataset):
-    """Returns mean roi coords
+    """Returns mean roi coords of all the subjects
     """
     mean_coords = []
     for subject_id in dataset.subjects:
@@ -44,7 +44,6 @@ def load_connectivity(dataset, session='func1', connectivity='pc', msdl=True):
     conn_all = np.array(conn_all)
     return conn_all
 
-
 def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1', mcp='bonf', 
                      z_fisher=True):
     """Perform and plot one sample t-tests (one per group)
@@ -52,7 +51,7 @@ def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1', mcp='bonf'
     n_rois = len(roi_names)
     if mcp == 'bonf':
         threshold /= n_rois*(n_rois-1)/2.
-#    n_rois = len(dataset.rois[0])    
+
     thresh_log = -np.log10(threshold)
     # We could impose working on z-Fisher transforms in case of Pearson's
     #correlation
@@ -80,6 +79,7 @@ def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1', mcp='bonf'
         fc_group_mean[ind_threshold] = 0
         t = np.zeros((n_rois, n_rois))
         t[ind] = fc_group_mean
+
         # plot connectivity matrix
         plt.figure(figsize=(8, 8))
         plt.imshow(t, interpolation='nearest', cmap=cm.hot)
@@ -97,7 +97,6 @@ def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1', mcp='bonf'
                                    + group + '_' + metric)#str(threshold)
         if msdl:
             output_file += '_msdl'
-
         plt.savefig(output_file)
     
         # plot connectome
@@ -106,17 +105,16 @@ def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1', mcp='bonf'
                                    + group + '_' + metric)
         if msdl:
             output_file += '_msdl'
-
-
         t = (t + t.T) / 2.
         plt.figure(figsize=(10, 20), dpi=90)
 
         title = group + '_' + session + '(-log p-val=' + str_thresh +')'
         if msdl:
             title += '_msdl'
-
         plot_connectome(t, roi_coords, edge_threshold='85%',
                         title=title, output_file=output_file)
+        
+        # save thresholded pvalues
         _, of = os.path.split(output_file)
         np.save(of, t)
 

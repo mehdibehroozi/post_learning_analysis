@@ -10,7 +10,7 @@ from loader import load_dynacomp
 from nilearn.input_data import NiftiMasker, MultiNiftiMasker
 from nilearn.plotting import plot_roi
 
-CACHE_DIR = '/disk4t/mehdi/data/tmp'
+CACHE_DIR = '.'
 dataset = load_dynacomp()
 
 

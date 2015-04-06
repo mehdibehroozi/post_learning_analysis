@@ -58,7 +58,7 @@ behav = []
 for i in range(len(dataset.subjects)):
     c = load_dynacomp_fc(dataset.subjects[i], session='func1', metric='pc', msdl=True)
     conn.append(c[i, j])
-    b = behav_data[i]['prePerf']# - behav_data[i]['preRT']
+    b = behav_data[i]['postRT'] - behav_data[i]['preRT']
     behav.append(b)
 
 sns.jointplot(np.array(conn), np.array(behav), kind='kde')
