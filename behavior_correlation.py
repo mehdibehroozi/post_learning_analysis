@@ -62,3 +62,5 @@ for i in range(len(dataset.subjects)):
     behav.append(b)
 
 sns.jointplot(np.array(conn), np.array(behav), kind='kde')
+sns.axlabel('Connectivity', 'Behavior')
+
