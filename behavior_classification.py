@@ -8,7 +8,7 @@ Created on Mon Apr  6 21:27:23 2015
 import numpy as np
 from loader import load_dynacomp, load_msdl_names_and_coords,\
                    load_dynacomp_fc
-from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model import RidgeClassifierCV, LogisticRegression
 from sklearn.svm import SVC
 from sklearn.lda import LDA
 from sklearn.learning_curve import learning_curve
@@ -32,18 +32,23 @@ def classification_learning_curves(X, y, metric=''):
     # Linear Discriminant Analysis
     lda = LDA()
     
+    # Logistic Regression
+    logit = LogisticRegression(penalty='l2', random_state=42)
+
+    estimator_str = ['svc', 'lda', 'rdgc', 'logit']
 
     # train size
     train_size = np.linspace(.2, .9, 8)    
     
     # Compute learning curves
-    for estimator in [svc, lda, rdgc]:
+    for e in estimator_str:
+        estimator = eval(e)
         ts, _, scores = learning_curve(estimator, X, y,
                                        train_sizes=train_size, cv=8)
         plt.plot(train_size, np.mean(scores, axis=1))
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.legend(['SVC', 'LDA', 'Ridge'], loc='best')
+    plt.legend(estimator_str, loc='best')
     plt.xlabel('Train size', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
     ymin,ymax = plt.ylim()
@@ -55,9 +60,6 @@ def classification_learning_curves(X, y, metric=''):
 def pairwise_classification(X, y, metric=''):
     """ Computes and plots accuracy of pairwise classification model
     """
-
-    # Feature selection with Anova
-    skb = SelectKBest(f_regression, k=20)
     
     # Ridge classification
     rdgc = RidgeClassifierCV(alphas=np.logspace(-3, 3, 7))
@@ -67,12 +69,17 @@ def pairwise_classification(X, y, metric=''):
     
     # Linear Discriminant Analysis
     lda = LDA()
+    
+    # Logistic Regression
+    logit = LogisticRegression(penalty='l2', random_state=42)
+
+    estimator_str = ['svc', 'lda', 'rdgc', 'logit']
 
     # train size
     train_size = np.linspace(.2, .9, 8)
 
-    for estimator in [svc, lda, rdgc]:
-        pipe = Pipeline([('kbest', skb), ('class', estimator)])
+    for e in estimator_str:
+        estimator = eval(e)
         mean_acc = []
         for ts in train_size:
             sss = StratifiedShuffleSplit(y, n_iter=50, train_size=ts, 
@@ -86,7 +93,7 @@ def pairwise_classification(X, y, metric=''):
         plt.plot(train_size, mean_acc)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.legend(['SVC', 'LDA', 'Ridge'], loc='best')
+    plt.legend(estimator_str, loc='best')
     plt.xlabel('Train size', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
     ymin,ymax = plt.ylim()
@@ -124,7 +131,8 @@ for metric in ['pc', 'gl', 'gsc']:
     # 3 groups classification
     X = []        
     for i, subject_id in enumerate(dataset.subjects):
-        X.append(load_dynacomp_fc(subject_id, session=session, metric=metric, msdl=msdl)[ind])
+        X.append(load_dynacomp_fc(subject_id, session=session,
+                                  metric=metric, msdl=msdl)[ind])
     X = np.array(X)
     plt.figure()
     classification_learning_curves(X, y, metric)
