@@ -19,7 +19,7 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 import matplotlib.pyplot as plt
 
 
-def classification_learning_curves(X, y, metric=''):
+def classification_learning_curves(X, y, title=''):
     """ Computes and plots learning curves of regression models of X and y
     """
     
@@ -54,10 +54,10 @@ def classification_learning_curves(X, y, metric=''):
     ymin,ymax = plt.ylim()
     plt.ylim(ymin, ymax + .1)
     plt.grid()
-    plt.title('Classification ' + metric, fontsize=16)
+    plt.title('Classification ' + title, fontsize=16)
 
 
-def pairwise_classification(X, y, metric=''):
+def pairwise_classification(X, y, title=''):
     """ Computes and plots accuracy of pairwise classification model
     """
     
@@ -99,7 +99,7 @@ def pairwise_classification(X, y, metric=''):
     ymin,ymax = plt.ylim()
     plt.ylim(ymin, ymax + .1)
     plt.grid()
-    plt.title('Classification ' + metric, fontsize=16)
+    plt.title('Classification ' + title, fontsize=16)
             
         
 
@@ -111,8 +111,10 @@ dataset = load_dynacomp()
 
 # Roi names
 roi_names = sorted(dataset.rois[0].keys())
+msdl_str = ''
 if msdl:
     roi_names, roi_coords = load_msdl_names_and_coords()
+    msdl_str='msdl'
 
 # Take only the lower diagonal values
 ind = np.tril_indices(len(roi_names), k=-1)
@@ -135,7 +137,8 @@ for metric in ['pc', 'gl', 'gsc']:
                                   metric=metric, msdl=msdl)[ind])
     X = np.array(X)
     plt.figure()
-    classification_learning_curves(X, y, metric)
+    classification_learning_curves(X, y, title='_'.join([metric,
+                                                         session, msdl_str]))
     
     # pairwise classification
     for i in range(2):
@@ -145,12 +148,16 @@ for metric in ['pc', 'gl', 'gsc']:
             Xp = np.vstack((X[gr_i, :], X[gr_j, :]))
             yp = np.array([0] * len(gr_i) + [1] * len(gr_j))
             plt.figure()
-            pairwise_classification(Xp, yp, metric='_'.join([groups[i],
-                                                             groups[j],
-                                                             metric]))
+            pairwise_classification(Xp, yp, title='_'.join([groups[i],
+                                                            groups[j],
+                                                            metric,
+                                                            session,
+                                                            msdl_str]))
                                                              
     # (v + av) vs avn classification
     plt.figure()
-    pairwise_classification(X, yn, metric='_'.join(['(v+av)/avn',
-                                                    metric]))
+    pairwise_classification(X, yn, title='_'.join(['(v+av)/avn',
+                                                    metric,
+                                                    session,
+                                                    msdl_str]))
 
