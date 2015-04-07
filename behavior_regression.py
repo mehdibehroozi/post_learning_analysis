@@ -62,6 +62,8 @@ for i in range(len(behav_data)):
         behav_data[i]['delta' + key] = behav_data[i]['post' + key] - \
                                        behav_data[i]['pre' + key]
 
+
+
 # Roi names
 roi_names = sorted(dataset.rois[0].keys())
 if msdl:

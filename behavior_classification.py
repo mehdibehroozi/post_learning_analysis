@@ -78,6 +78,8 @@ def pairwise_classification(X, y, title=''):
     # train size
     train_size = np.linspace(.2, .9, 8)
 
+    best_w = []
+    best_acc = 0
     for e in estimator_str:
         estimator = eval(e)
         mean_acc = []
@@ -86,10 +88,17 @@ def pairwise_classification(X, y, title=''):
                                          random_state=42)
             # Compute accuracies
             accuracy = []
+            w = []
             for train, test in sss:
                 estimator.fit(X[train], y[train])
                 accuracy.append(estimator.score(X[test], y[test]))
-            mean_acc.append(np.mean(accuracy))
+                if e != 'svc' and e != 'lda':
+                    w.append(estimator.coef_)
+            acc = np.mean(accuracy)
+            mean_acc.append(acc)
+            if len(w) > 0 and acc > best_acc :
+                best_acc = acc
+                best_w = w
         plt.plot(train_size, mean_acc)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
@@ -100,13 +109,15 @@ def pairwise_classification(X, y, title=''):
     plt.ylim(ymin, ymax + .1)
     plt.grid()
     plt.title('Classification ' + title, fontsize=16)
+    
+    return best_w, best_acc
             
         
 
 ##############################################################################
 # Load data
 session = 'func1'
-msdl = True
+msdl = False
 dataset = load_dynacomp()
 
 # Roi names
@@ -123,6 +134,8 @@ ind = np.tril_indices(len(roi_names), k=-1)
 groups = ['avn', 'v', 'av']
 y = np.zeros(len(dataset.subjects))
 yn = np.zeros(len(dataset.subjects))
+yv = np.ones(len(dataset.subjects))
+yv[dataset.group_indices['v']] = 0
 for i, group in enumerate(['v', 'av']):
     y[dataset.group_indices[group]] = i + 1
     yn[dataset.group_indices[group]] = 1
@@ -131,7 +144,7 @@ for i, group in enumerate(['v', 'av']):
 for metric in ['pc', 'gl', 'gsc']:
     
     # 3 groups classification
-    X = []        
+    X = []
     for i, subject_id in enumerate(dataset.subjects):
         X.append(load_dynacomp_fc(subject_id, session=session,
                                   metric=metric, msdl=msdl)[ind])
@@ -161,3 +174,9 @@ for metric in ['pc', 'gl', 'gsc']:
                                                     session,
                                                     msdl_str]))
 
+    # (v + av) vs avn classification
+    plt.figure()
+    pairwise_classification(X, yv, title='_'.join(['(av+avn)/v',
+                                                    metric,
+                                                    session,
+                                                    msdl_str]))
