@@ -12,6 +12,8 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.svm import SVC
 from sklearn.lda import LDA
 from sklearn.learning_curve import learning_curve
+from sklearn.preprocessing import StandardScaler
+from sklearn.cross_validation import StratifiedShuffleSplit
 import matplotlib.pyplot as plt
 
 
@@ -28,11 +30,15 @@ def classification_learning_curves(X, y, metric=''):
     # Linear Discriminant Analysis
     lda = LDA()
     
+
+    # train size
+    train_size = np.linspace(.2, .9, 8)    
+    
     # Compute learning curves
     for estimator in [svc, lda, rdgc]:
         train_size, _, scores = learning_curve(estimator, X, y,
-                               train_sizes=np.linspace(.2, .95, 10), cv=8)
-        plt.plot(np.linspace(.2, .95, 10), np.mean(scores, axis=1))
+                               train_sizes=train_size, cv=8)
+        plt.plot(train_size, np.mean(scores, axis=1))
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.legend(['SVC', 'LDA', 'Ridge cl'], loc='best')
@@ -43,6 +49,45 @@ def classification_learning_curves(X, y, metric=''):
     plt.grid()
     plt.title('Classification ' + metric, fontsize=16)
 
+
+def pairwise_classification(X, y, metric=''):
+    """ Computes and plots accuracy of pairwise classification model
+    """
+    # Ridge classification
+    rdgc = RidgeClassifierCV(alphas=np.logspace(-3, 3, 7))
+
+    # Support Vector classification    
+    svc = SVC()
+    
+    # Linear Discriminant Analysis
+    lda = LDA()
+
+    # train size
+    train_size = np.linspace(.2, .9, 8)
+
+    for estimator in [svc, lda, rdgc]:    
+        mean_acc = []
+        for ts in train_size:
+            sss = StratifiedShuffleSplit(y, n_iter=50, train_size=ts, 
+                                         random_state=42)
+            # Compute accuracies
+            accuracy = []
+            for train, test in sss:
+                estimator.fit(X[train], y[train])
+                accuracy.append(estimator.score(X[test], y[test]))
+            mean_acc.append(np.mean(accuracy))
+        plt.plot(train_size, mean_acc)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.legend(['SVC', 'LDA', 'Ridge cl'], loc='best')
+    plt.xlabel('Train size', fontsize=16)
+    plt.ylabel('Accuracy', fontsize=16)
+    ymin,ymax = plt.ylim()
+    plt.ylim(ymin, ymax + .1)
+    plt.grid()
+    plt.title('Classification ' + metric, fontsize=16)
+            
+        
 
 ##############################################################################
 # Load data
@@ -73,3 +118,15 @@ for metric in ['pc', 'gl', 'gsc']:
     X = np.array(X)
     plt.figure()
     classification_learning_curves(X, y, metric)
+    
+    # pairwise classification
+    for i in range(2):
+        for j in range(i+1, 3):
+            gr_i = dataset.group_indices[groups[i]]
+            gr_j = dataset.group_indices[groups[j]]
+            Xp = np.vstack((X[gr_i, :], X[gr_j, :]))
+            yp = np.array([0] * len(gr_i) + [1] * len(gr_j))
+            plt.figure()
+            pairwise_classification(Xp, yp, metric='_'.join([groups[i],
+                                                             groups[j],
+                                                             metric]))
