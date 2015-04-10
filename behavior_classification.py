@@ -17,6 +17,7 @@ from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import StratifiedShuffleSplit
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from nilearn.plotting import plot_connectome
 
 
@@ -45,15 +46,19 @@ def classification_learning_curves(X, y, title=''):
     for e in estimator_str:
         estimator = eval(e)
         ts, _, scores = learning_curve(estimator, X, y,
-                                       train_sizes=train_size, cv=8)
-        plt.plot(train_size, np.mean(scores, axis=1))
+                                       train_sizes=train_size, cv=4)
+        bl = plt.plot(train_size, np.mean(scores, axis=1))
+        plt.fill_between(train_size,
+                         np.mean(scores, axis=1) - np.std(scores, axis=1),
+                         np.mean(scores, axis=1) + np.std(scores, axis=1),
+                         facecolor=bl[0].get_c(),
+                         alpha=0.1)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.legend(estimator_str, loc='best')
     plt.xlabel('Train size', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
-    ymin,ymax = plt.ylim()
-    plt.ylim(ymin, ymax + .1)
+    plt.ylim([.3, .9])
     plt.grid()
     plt.title('Classification ' + title, fontsize=16)
 
@@ -72,9 +77,9 @@ def pairwise_classification(X, y, title=''):
     lda = LDA()
     
     # Logistic Regression
-    logit = LogisticRegression(penalty='l2', random_state=42)
+    logit = LogisticRegression(penalty='l1', random_state=42)
 
-    estimator_str = ['svc', 'lda', 'rdgc', 'logit']
+    estimator_str = ['lda', 'rdgc', 'logit']
 
     # train size
     train_size = np.linspace(.2, .9, 8)
@@ -84,6 +89,7 @@ def pairwise_classification(X, y, title=''):
     for e in estimator_str:
         estimator = eval(e)
         mean_acc = []
+        std_acc = []
         for ts in train_size:
             sss = StratifiedShuffleSplit(y, n_iter=50, train_size=ts, 
                                          random_state=42)
@@ -96,18 +102,24 @@ def pairwise_classification(X, y, title=''):
                 if e != 'svc' and e != 'lda':
                     w.append(estimator.coef_)
             acc = np.mean(accuracy)
+            acc_std = np.std(accuracy)
             mean_acc.append(acc)
+            std_acc.append(acc_std)
             if len(w) > 0 and acc > best_acc :
                 best_acc = acc
                 best_w = np.mean(w, axis=0)
-        plt.plot(train_size, mean_acc)
+        bl = plt.plot(train_size, mean_acc)
+        plt.fill_between(train_size,
+                         np.sum([mean_acc, std_acc], axis=0),
+                         np.subtract(mean_acc, std_acc),
+                         facecolor=bl[0].get_c(),
+                         alpha=0.1)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.legend(estimator_str, loc='best')
     plt.xlabel('Train size', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
-    ymin,ymax = plt.ylim()
-    plt.ylim(ymin, ymax + .1)
+    plt.ylim([.3, .9])
     plt.grid()
     plt.title('Classification ' + title, fontsize=16)
     
@@ -117,9 +129,14 @@ def pairwise_classification(X, y, title=''):
 
 ##############################################################################
 # Load data
-session = 'func1'
+session = 'avg'
 msdl = False
-dataset = load_dynacomp()
+
+#preprocessing_folder = 'pipeline_1'
+#prefix = 'swr'
+preprocessing_folder = 'pipeline_2'
+prefix = 'resampled_wr'
+dataset = load_dynacomp(preprocessing_folder, prefix)
 
 # Roi names and coords
 if msdl:
@@ -143,13 +160,14 @@ for i, group in enumerate(['v', 'av']):
     yn[dataset.group_indices[group]] = 1
 
 # Do classification for each metric
-for metric in ['pc', 'gl', 'gsc']:
+for metric in ['gl', 'gsc']:
     
     # 3 groups classification
     X = []
     for i, subject_id in enumerate(dataset.subjects):
         X.append(load_dynacomp_fc(subject_id, session=session,
-                                  metric=metric, msdl=msdl)[ind])
+                                  metric=metric, msdl=msdl,
+                                  preprocessing_folder=preprocessing_folder)[ind])
     X = np.array(X)
     plt.figure()
     classification_learning_curves(X, y, title='_'.join([metric,
@@ -195,3 +213,12 @@ for metric in ['pc', 'gl', 'gsc']:
                                                     session,
                                                     msdl_str]))
     print 'av+avn / v ', a
+    t = np.zeros((len(roi_names), len(roi_names)))
+    t[ind] = np.abs(w)
+    t = (t + t.T) / 2.
+    plot_connectome(t, roi_coords, title='_'.join(['(av+avn)/v',
+                                                    metric,
+                                                    session,
+                                                    msdl_str]),
+                    edge_threshold='98%')
+    break
