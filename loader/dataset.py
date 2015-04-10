@@ -51,17 +51,18 @@ def set_group_indices(group):
         idx[g] = np.where(group == g)[0]
     return idx
 
-def load_dynacomp_fc(subject_id, session='func1', metric='pc', msdl=True):
+def load_dynacomp_fc(subject_id, session='func1', metric='pc', msdl=True,
+                     preprocessing_folder='pipeline_1'):
     """ Loads of Dynacomp FC results depending on the FC metrics
     """
     CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+       
+    fname = '_'.join([metric, session, preprocessing_folder])
     if msdl == True:
-        filename = os.path.join(CONN_DIR, subject_id, metric + '_' + session +
-                                                  '_msdl.npz')
-#        print filename
-    else:
-        filename = os.path.join(CONN_DIR, subject_id, metric + '_' + session +
-                                                  '.npz')
+        fname += '_msdl'
+        
+    filename = os.path.join(CONN_DIR, subject_id, fname + '.npz')
+
     data = np.load(filename)
     if metric == 'gl' or metric == 'gsc':
         data = data['covariance']
@@ -132,6 +133,9 @@ def load_dynacomp_roi_timeseries(subject_id, session='func1',
     subject_path = os.path.join(SUBJ_DIR, subject_id)
     func_rois = os.path.join(subject_path, 'fMRI', 'acquisition1',
                              session + '_rois_no_filter.npy')
+    if not os.path.isfile(func_rois):
+        func_rois = os.path.join(subject_path, 'fMRI', 'acquisition1',
+                                 session + '_rois_filter.npy')
     ts_rois = np.load(func_rois)
     
     if clean:
@@ -144,7 +148,8 @@ def load_dynacomp_roi_timeseries(subject_id, session='func1',
     return ts_rois
 
 def load_dynacomp_msdl_timeseries(subject_id, session='func1',
-                                 preprocessing_folder='pipeline_1'):
+                                 preprocessing_folder='pipeline_1',
+                                 clean=False):
     """ Returns fMRI signal associated with each ROIs associate with MSDL
         atlas
     """
@@ -153,7 +158,18 @@ def load_dynacomp_msdl_timeseries(subject_id, session='func1',
     subject_path = os.path.join(SUBJ_DIR, subject_id)
     func_rois = os.path.join(subject_path, 'fMRI', 'acquisition1',
                              session + '_msdl_no_filter.npy')
+    if not os.path.isfile(func_rois):
+        func_rois = os.path.join(subject_path, 'fMRI', 'acquisition1',
+                                 session + '_msdl_filter.npy')
     ts_rois = np.load(func_rois)
+    
+    if clean:
+        motion_path = glob.glob(\
+                      os.path.join(subject_path, 'fMRI',
+                                   'acquisition1',
+                                   'rp_rest' + session[-1] + '*.txt'))[0]
+        motion = np.loadtxt(motion_path)
+        ts_rois = clean_timeserie(ts_rois, motion)
     return ts_rois
 
 

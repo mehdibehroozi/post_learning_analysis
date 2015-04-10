@@ -9,7 +9,7 @@ import numpy as np
 from loader import load_dynacomp, load_dynacomp_roi_timeseries, \
                    load_roi_names_and_coords, set_figure_base_dir,\
                    set_data_base_dir, load_dynacomp_msdl_timeseries, \
-                   load_msdl_names_and_coords, clean_timeserie
+                   load_msdl_names_and_coords
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from nilearn.plotting import plot_connectome
@@ -18,14 +18,22 @@ from nilearn.group_sparse_covariance import GroupSparseCovarianceCV
 
 
 def plot_connectivity_matrix(subject_id, group, pc, roi_names,
-                             suffix, session='func1', save=True, msdl=False):
+                             suffix, session='func1',
+                             preprocessing_folder='pipeline_1',
+                             save=True, msdl=False):
     """Plots connectivity matrix of pc
     """
     title = '-'.join([suffix, group, subject_id, session])
     # plot matrix
-    output_file = os.path.join(set_figure_base_dir('connectivity'),
+    output_folder = os.path.join(set_figure_base_dir('connectivity'), suffix)
+    
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)    
+   
+    output_file = os.path.join(output_folder,
                                '_'.join([suffix, 'matrix', group,
-                                         session, subject_id]))
+                                         session,
+                                         preprocessing_folder, subject_id]))
 
     if msdl:
         title += '_msdl'
@@ -48,13 +56,21 @@ def plot_connectivity_matrix(subject_id, group, pc, roi_names,
 
 
 def plot_connectivity_glassbrain(subject_id, group, pc, roi_coords,
-                                 suffix, session='func1', save=True, msdl=False):
+                                 suffix, session='func1',
+                                 preprocessing_folder='pipeline_1',
+                                 save=True, msdl=False):
     """Plots connectome of pc
     """
     title = '-'.join([suffix, group, subject_id, session])
-    output_file = os.path.join(set_figure_base_dir('connectivity'),
+    
+    output_folder = os.path.join(set_figure_base_dir('connectivity'), suffix)
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+    
+    output_file = os.path.join(output_folder,
                                '_'.join([suffix, 'connectome', group,
-                                         session, subject_id]))
+                                         session,
+                                         preprocessing_folder, subject_id]))
                                          
     if msdl:
         title += '_msdl'
@@ -91,14 +107,17 @@ def compute_pearson_connectivity(subject_id, group, session='func1',
         print session
         plot_connectivity_matrix(subject_id, group, pc,
                                  roi_names, 'pc',
-                                 session, save, msdl)
+                                 session,
+                                 preprocessing_folder, save, msdl)
         plot_connectivity_glassbrain(subject_id, group, pc,
-                                     roi_coords, 'pc', session, save, msdl)
+                                     roi_coords, 'pc', session,
+                                     preprocessing_folder, save, msdl)
     if save_file:
         CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
         if not os.path.isdir(os.path.join(CONN_DIR, subject_id)):
             os.mkdir(os.path.join(CONN_DIR, subject_id))
-        output_file = os.path.join(CONN_DIR, subject_id, 'pc_' + session)
+        output_file = os.path.join(CONN_DIR, subject_id,
+                                   'pc_' + session + '_' + preprocessing_folder)
         if msdl:
             output_file += '_msdl'
         np.savez(output_file, correlation=pc,
@@ -128,22 +147,27 @@ def compute_graph_lasso_covariance(subject_id, group, session='func1',
     gl.fit(ts)
     if plot:
         plot_connectivity_matrix(subject_id, group, gl.covariance_,
-                                 roi_names, 'gl_covariance', session, save, msdl)
+                                 roi_names, 'gl_covariance', session,
+                                 preprocessing_folder, save, msdl)
         plot_connectivity_matrix(subject_id, group, gl.precision_,
-                                 roi_names, 'gl_precision', session, save, msdl)
+                                 roi_names, 'gl_precision', session,
+                                 preprocessing_folder, save, msdl)
         sparsity = (gl.precision_ == 0)
         plot_connectivity_matrix(subject_id, group, sparsity,
-                                 roi_names, 'gl_sparsity', session, save, msdl)
+                                 roi_names, 'gl_sparsity', session,
+                                 preprocessing_folder, save, msdl)
 
         plot_connectivity_glassbrain(subject_id, group, gl.covariance_,
-                                     roi_coords, 'gl_covariance', session, save, msdl)
+                                     roi_coords, 'gl_covariance', session,
+                                     preprocessing_folder, save, msdl)
 
     if save_file:
         CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
         sparsity = (gl.precision_ == 0)
         if not os.path.isdir(os.path.join(CONN_DIR, subject_id)):
             os.mkdir(os.path.join(CONN_DIR, subject_id))
-        output_file = os.path.join(CONN_DIR, subject_id, 'gl_' + session)
+        output_file = os.path.join(CONN_DIR, subject_id,
+                                   'gl_' + session + '_' + preprocessing_folder)
         if msdl:
             output_file += '_msdl'
         np.savez(output_file, covariance=gl.covariance_,
@@ -185,20 +209,24 @@ def compute_group_sparse_covariance(dataset, session='func1',
 
             plot_connectivity_matrix(dataset.subjects[i], dataset.group[i],
                                      gsc.covariances_[..., i],
-                                     roi_names, 'gsc_covariance', session, save, msdl)
+                                     roi_names, 'gsc_covariance', session,
+                                     preprocessing_folder, save, msdl)
 
             plot_connectivity_matrix(dataset.subjects[i], dataset.group[i],
                                      gsc.precisions_[..., i],
-                                     roi_names, 'gsc_precision', session, save, msdl)
+                                     roi_names, 'gsc_precision', session,
+                                     preprocessing_folder, save, msdl)
 
             sparsity = (gsc.precisions_[..., i] == 0)
             plot_connectivity_matrix(dataset.subjects[i], dataset.group[i],
                                      sparsity,
-                                     roi_names, 'gsc_sparsity', session, save, msdl)
+                                     roi_names, 'gsc_sparsity', session,
+                                     preprocessing_folder, save, msdl)
 
             plot_connectivity_glassbrain(dataset.subjects[i], dataset.group[i],
                                          gsc.covariances_[..., i],
-                                         roi_coords, 'gsc_covariance', session, save, msdl)
+                                         roi_coords, 'gsc_covariance', session,
+                                         preprocessing_folder, save, msdl)
 
     for i in range(len(dataset.subjects)):
         if not msdl:
@@ -210,7 +238,8 @@ def compute_group_sparse_covariance(dataset, session='func1',
         subject_id = dataset.subjects[i]
         if not os.path.isdir(os.path.join(CONN_DIR, subject_id)):
             os.mkdir(os.path.join(CONN_DIR, subject_id))
-        output_file = os.path.join(CONN_DIR, subject_id, 'gsc_' + session)
+        output_file = os.path.join(CONN_DIR, subject_id,
+                                   'gsc_' + session + '_' + preprocessing_folder)
         if msdl:
             output_file += '_msdl'
         np.savez(output_file, covariance=gsc.covariances_[..., i],
@@ -220,23 +249,42 @@ def compute_group_sparse_covariance(dataset, session='func1',
     return gsc, roi_names, roi_coords
 
 ##############################################################################
-dataset = load_dynacomp()
+
+#preprocessing_folder = 'pipeline_1'
+#prefix = 'swr'
+preprocessing_folder = 'pipeline_2'
+prefix = 'resampled_wr'
+msdl = True
+
+dataset = load_dynacomp(preprocessing_folder=preprocessing_folder,
+                        prefix=prefix)
 
 for session_i in ['func1', 'func2']:
     for i in range(len(dataset.subjects)):
         print dataset.subjects[i], session_i
-        compute_pearson_connectivity(dataset.subjects[i], dataset.group[i],
-                                     plot=False, save=False,
-                                     session=session_i, save_file=False,
-                                     msdl=True)
-        break
-    break
+        compute_pearson_connectivity(dataset.subjects[i],
+                                     dataset.group[i],
+                                     session=session_i,
+                                     preprocessing_folder=preprocessing_folder,
+                                     plot=True,
+                                     save=True,
+                                     save_file=True,
+                                     msdl=msdl)
 
-#        compute_graph_lasso_covariance(dataset.subjects[i], dataset.group[i],
-#                                       plot=True, save=True,
-#                                       session=session_i, save_file=True,
-#                                       msdl=True)
 
-#    compute_group_sparse_covariance(dataset, save=True, plot=True,
-#                                    session=session_i, save_file=True,
-#                                    msdl=True)
+        compute_graph_lasso_covariance(dataset.subjects[i],
+                                       dataset.group[i],
+                                       session=session_i,
+                                       preprocessing_folder=preprocessing_folder,
+                                       plot=True,
+                                       save=True,
+                                       save_file=True,
+                                       msdl=msdl)
+
+    compute_group_sparse_covariance(dataset,
+                                    session=session_i,
+                                    preprocessing_folder=preprocessing_folder,
+                                    plot=True,
+                                    save=True,
+                                    save_file=True,
+                                    msdl=msdl)
