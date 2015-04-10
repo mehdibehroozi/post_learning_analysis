@@ -7,7 +7,7 @@ Created on Mon Apr  6 21:27:23 2015
 
 import numpy as np
 from loader import load_dynacomp, load_msdl_names_and_coords,\
-                   load_dynacomp_fc
+                   load_dynacomp_fc, load_roi_names_and_coords
 from sklearn.linear_model import RidgeClassifierCV, LogisticRegression
 from sklearn.svm import SVC
 from sklearn.lda import LDA
@@ -17,6 +17,7 @@ from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import StratifiedShuffleSplit
 import matplotlib.pyplot as plt
+from nilearn.plotting import plot_connectome
 
 
 def classification_learning_curves(X, y, title=''):
@@ -98,7 +99,7 @@ def pairwise_classification(X, y, title=''):
             mean_acc.append(acc)
             if len(w) > 0 and acc > best_acc :
                 best_acc = acc
-                best_w = w
+                best_w = np.mean(w, axis=0)
         plt.plot(train_size, mean_acc)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
@@ -120,12 +121,13 @@ session = 'func1'
 msdl = False
 dataset = load_dynacomp()
 
-# Roi names
-roi_names = sorted(dataset.rois[0].keys())
-msdl_str = ''
+# Roi names and coords
 if msdl:
     roi_names, roi_coords = load_msdl_names_and_coords()
     msdl_str='msdl'
+else:
+    roi_names, roi_coords  = load_roi_names_and_coords(dataset.subjects[0])
+    msdl_str = ''
 
 # Take only the lower diagonal values
 ind = np.tril_indices(len(roi_names), k=-1)
@@ -161,22 +163,35 @@ for metric in ['pc', 'gl', 'gsc']:
             Xp = np.vstack((X[gr_i, :], X[gr_j, :]))
             yp = np.array([0] * len(gr_i) + [1] * len(gr_j))
             plt.figure()
-            pairwise_classification(Xp, yp, title='_'.join([groups[i],
+            w,a = pairwise_classification(Xp, yp, title='_'.join([groups[i],
                                                             groups[j],
                                                             metric,
                                                             session,
                                                             msdl_str]))
+            print groups[i], groups[j], a
                                                              
     # (v + av) vs avn classification
     plt.figure()
-    pairwise_classification(X, yn, title='_'.join(['(v+av)/avn',
+    w,a = pairwise_classification(X, yn, title='_'.join(['(v+av)/avn',
                                                     metric,
                                                     session,
                                                     msdl_str]))
 
-    # (v + av) vs avn classification
+    print 'v+av / avn ', a
+    t = np.zeros((len(roi_names), len(roi_names)))
+    t[ind] = np.abs(w)
+    t = (t + t.T) / 2.
+    plot_connectome(t, roi_coords, title='_'.join(['(v+av)/avn',
+                                                    metric,
+                                                    session,
+                                                    msdl_str]),
+                    edge_threshold='98%')
+    
+    
+    # (av + avn) vs v classification
     plt.figure()
-    pairwise_classification(X, yv, title='_'.join(['(av+avn)/v',
+    w,a = pairwise_classification(X, yv, title='_'.join(['(av+avn)/v',
                                                     metric,
                                                     session,
                                                     msdl_str]))
+    print 'av+avn / v ', a
