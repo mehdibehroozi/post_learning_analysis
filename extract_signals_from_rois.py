@@ -24,7 +24,8 @@ for idx, func in enumerate([dataset.func1, dataset.func2]):
         print dataset.subjects[i]
         maps_img = dict_to_list(dataset.rois[i])
         # add mask, smoothing, filtering and detrending
-        masker = NiftiMapsMasker(maps_img=maps_img, mask_img=dataset.mask,
+        masker = NiftiMapsMasker(maps_img=maps_img,
+                                 mask_img=dataset.mask,
                                  low_pass=.1,
                                  high_pass=.01,
                                  smoothing_fwhm=6.,
