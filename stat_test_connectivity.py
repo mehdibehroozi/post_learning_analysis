@@ -10,7 +10,7 @@ import numpy as np
 from nilearn.mass_univariate import permuted_ols
 from loader import load_dynacomp_fc, load_dynacomp, load_roi_names_and_coords
 from loader import load_msdl_names_and_coords
-from loader import set_figure_base_dir
+from loader import set_figure_base_dir, set_data_base_dir
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from nilearn.plotting import plot_connectome
@@ -32,19 +32,23 @@ def mean_coords(dataset):
     mean_coords = np.mean(mean_coords, axis=0)
     return roi_names, mean_coords 
 
-def load_connectivity(dataset, session='func1', connectivity='pc', msdl=True):
+def load_connectivity(dataset, session='func1', preprocessing_folder='pipeline_1',
+                      metric='pc', msdl=True):
     """Returns the connectivity of all the subjects
     """
     conn_all = []
     for i in range(len(dataset.subjects)):
-        cc = load_dynacomp_fc(dataset.subjects[i], session=session,
-                             metric=connectivity, msdl=msdl)        
-        pc = cc[ind]
-        conn_all.append(pc)
+        cc = load_dynacomp_fc(dataset.subjects[i],
+                              session=session,
+                              preprocessing_folder=preprocessing_folder,
+                              metric=metric, msdl=msdl)
+        fc = cc[ind]
+        conn_all.append(fc)
     conn_all = np.array(conn_all)
     return conn_all
 
-def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1', mcp='bonf', 
+def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1',
+                     preprocessing_folder='pipeline_1', mcp='bonf', 
                      z_fisher=True):
     """Perform and plot one sample t-tests (one per group)
     """
@@ -92,33 +96,52 @@ def one_sample_ttest(fc_all, metric, threshold=0.05, session='func1', mcp='bonf'
         plt.xticks(range(len(roi_names)), roi_names,
                    rotation='vertical', fontsize=16)
         plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
-        output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                   'ttest_connectivity_' + session + '_' 
-                                   + group + '_' + metric)#str(threshold)
+        
+        
+        output_folder = os.path.join(set_figure_base_dir('stat/one_sample'),
+                                     metric)
+        if not os.path.isdir(output_folder):
+            os.makedirs(output_folder)
+        
+        output_file = os.path.join(output_folder,
+                                   '_'.join(['ttest', 'matrix',
+                                             session, group,
+                                             metric, preprocessing_folder]))
         if msdl:
             output_file += '_msdl'
         plt.savefig(output_file)
     
         # plot connectome
-        output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                   'ttest_connectome_'  + session + '_' 
-                                   + group + '_' + metric)
+        output_file = os.path.join(output_folder,
+                                   '_'.join(['ttest', 'connectome',
+                                             session, group,
+                                             metric, preprocessing_folder]))
         if msdl:
             output_file += '_msdl'
+        
         t = (t + t.T) / 2.
         plt.figure(figsize=(10, 20), dpi=90)
 
         title = group + '_' + session + '(-log p-val=' + str_thresh +')'
         if msdl:
             title += '_msdl'
-        plot_connectome(t, roi_coords, edge_threshold='85%',
-                        title=title, output_file=output_file)
+            
+        try :
+            plot_connectome(t, roi_coords, edge_threshold='85%',
+                            title=title, output_file=output_file)
+        except ValueError :
+            print 'unable to plot connectome !'
         
         # save thresholded pvalues
+        output_folder = set_data_base_dir('Dynacomp/stat')
+        if not os.path.isdir(output_folder):
+            os.makedirs(output_folder)
         _, of = os.path.split(output_file)
-        np.save(of, t)
+        np.save(os.path.join(output_folder, of), t)
 
-def two_sample_ttest(fc_all, metric, threshold=.05, session='func1', mcp='unc',
+def two_sample_ttest(fc_all, metric, threshold=.05, session='func1',
+                     preprocessing_folder='pipeline_1',
+                     mcp='unc',
                      z_fisher=False):
     """ perform and plot two samples t-tests
     """
@@ -176,20 +199,28 @@ def two_sample_ttest(fc_all, metric, threshold=.05, session='func1', mcp='unc',
             plt.xticks(range(len(roi_names)), roi_names,
                        rotation='vertical', fontsize=16)
             plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
-            output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                       'ttest2_connectivity_' + session + '_' + \
-                                       groups[i] + ' _ ' + groups[j] + '_' +
-                                       metric)
+
+
+            output_folder = os.path.join(set_figure_base_dir('stat/two_sample'),
+                                         metric)
+            if not os.path.isdir(output_folder):
+                os.makedirs(output_folder)
+            
+            output_file = os.path.join(output_folder,
+                                       '_'.join(['ttest2', 'matrix',
+                                                 session, groups[i], groups[j],
+                                                 metric, preprocessing_folder]))
             if msdl:
                 output_file += '_msdl'
-
+            
             plt.savefig(output_file)
 
             # plot connectome
-            output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                       'ttest2_connectome_' + session + '_' + \
-                                       groups[i] + ' _ ' + groups[j] + '_' +
-                                       metric)
+            output_file = os.path.join(output_folder,
+                                       '_'.join(['ttest2', 'connectome',
+                                                 session, groups[i], groups[j],
+                                                 metric, preprocessing_folder]))
+
             if msdl:
                 output_file += '_msdl'
 
@@ -199,9 +230,12 @@ def two_sample_ttest(fc_all, metric, threshold=.05, session='func1', mcp='unc',
                     session + '(p-val <' + str_thresh +')'
             if msdl:
                 title += '_msdl'
-            plot_connectome(p, roi_coords, edge_threshold='85%',
-                            title=title,
-                            output_file=output_file)
+            try:
+                plot_connectome(p, roi_coords, edge_threshold='85%',
+                                title=title,
+                                output_file=output_file)
+            except ValueError :
+                print 'unable to plot connectome !'
 
 def permuted_two_sample_ttest(fc_all, metric, threshold=0.05, session='func1',
                               mcp='unc', z_fisher=False):
@@ -245,17 +279,28 @@ def permuted_two_sample_ttest(fc_all, metric, threshold=0.05, session='func1',
             plt.xticks(range(len(roi_names)), roi_names,
                        rotation='vertical', fontsize=16)
             plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
-            output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                       'ttest2_perm_connectivity_' + session + '_' + \
-                                       groups[i] + ' _ ' + groups[j])
+
+
+            output_folder = os.path.join(set_figure_base_dir('stat/two_sample'),
+                                         metric)
+            if not os.path.isdir(output_folder):
+                os.makedirs(output_folder)
+            
+            output_file = os.path.join(output_folder,
+                                       '_'.join(['ttest2', 'perm', 'matrix',
+                                                 session, groups[i], groups[j],
+                                                 metric, preprocessing_folder]))
             if msdl:
                 output_file += '_msdl'
 
             plt.savefig(output_file)
             # plot connectome
-            output_file = os.path.join(set_figure_base_dir(), 'connectivity',
-                                       'ttest2_perm_connectome_' + session + '_' + \
-                                       groups[i] + ' _ ' + groups[j])
+
+            output_file = os.path.join(output_folder,
+                                       '_'.join(['ttest2', 'perm', 'connectome',
+                                                 session, groups[i], groups[j],
+                                                 metric, preprocessing_folder]))
+
             if msdl:
                 output_file += '_msdl'
 
@@ -265,79 +310,70 @@ def permuted_two_sample_ttest(fc_all, metric, threshold=0.05, session='func1',
             title = groups[i] + ' / ' + groups[j] + '_' + session
             if msdl:
                 title += '_msdl'
-            plot_connectome(p, roi_coords, edge_threshold='90%',
-                            title=title,
-                            output_file=output_file)
+                
+            try :
+                plot_connectome(p, roi_coords, edge_threshold='90%',
+                                title=title,
+                                output_file=output_file)
+            except ValueError :
+                print 'unable to plot connectome !'
 
 
 ##############################################################################
+##############################################################################
 # Load data and extract only
-dataset = load_dynacomp()
-msdl = True
+
+#preprocessing_folder = 'pipeline_1'
+#prefix = 'swr'
+preprocessing_folder = 'pipeline_2'
+prefix = 'resampled_wr'
+
+msdl = False
 #msdl = False
 #Switch  between subject-dependent ROIs and MSDL atlas
+
+dataset = load_dynacomp(preprocessing_folder=preprocessing_folder,
+                        prefix=prefix)
+
 roi_names, roi_coords = mean_coords(dataset)
+
 # Roi names
 roi_names = sorted(dataset.rois[0].keys())
 if msdl:
     roi_names, roi_coords = load_msdl_names_and_coords()
+nb_rois = len(roi_names)
 
 # Lower diagonal
-#ind = np.tril_indices(len(dataset.rois[0].keys()), k=-1)
 ind = np.tril_indices(len(roi_names), k=-1)
 
 #session = 'func1'
 #session = 'func2'
 #session = 'avg'
+sessions = ['func1', 'func2', 'avg']
+
+
 #metric = 'pc'
 #metric = 'gl' #graph-lasso
 #metric = 'gsc' #group sparse covariance
-
 metrics = ['pc', 'gl', 'gsc']
-metrics = ['gsc']
 
-# Load correlations
-#pc_all = load_connectivity(dataset, session, metric)
-nb_rois = len(roi_names)
-
-sessions = ['func1','func2']
-fc_allsess = np.zeros([len(sessions),len(dataset.subjects),
-                       nb_rois*(nb_rois-1)/2.], dtype='float64')
-
-for s in range(len(sessions)):
-    fc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric, msdl)
-
-
-#if session == 'avg':
-#    for s in range(len(sessions)):
-#        pc_allsess[s,:,:] = load_connectivity(dataset, sessions[s], metric,
-#                                              msdl)
-#    pc_all = np.mean(pc_allsess,axis=0)
-#else:
-#    pc_all = load_connectivity(dataset, session, metric, msdl)
-                       
-# z-fisher 
-#pc_all = .5 * np.log((1 + pc_all)/(1 - pc_all))
-#threshold = 3.66
-#one_sample_ttest(metric, threshold=1.3, session='avg')
-#two_sample_ttest(metric, threshold=1.3, session='avg')
-all_sess = sessions
-all_sess.append('avg')
-print all_sess
 for met in metrics:
     print 'Stats analysis of FC measure: %s' %met 
-    for sess in all_sess:
+    for sess in sessions:
         print 'Treating sess: %s' %sess
-        if sess == 'avg':
-            fc_all = np.mean(fc_allsess,axis=0)
-        else:
-            fc_all = load_connectivity(dataset, sess, met, msdl)
+
+        fc_all = load_connectivity(dataset, sess,
+                                   preprocessing_folder, met, msdl)
         if met == 'gsc':
             one_sample_ttest(fc_all, met, threshold=0.05, session=sess,
+                             preprocessing_folder=preprocessing_folder,
                              mcp='unc')
             two_sample_ttest(fc_all, met, threshold=0.05, session=sess,
+                             preprocessing_folder=preprocessing_folder,
                              mcp='unc')
         else:
-            one_sample_ttest(fc_all, met, threshold=0.05, session=sess)
-            two_sample_ttest(fc_all, met, threshold=0.05, session=sess)
+            one_sample_ttest(fc_all, met, threshold=0.05, session=sess,
+                             preprocessing_folder=preprocessing_folder)
+            two_sample_ttest(fc_all, met, threshold=0.05, session=sess,
+                             preprocessing_folder=preprocessing_folder)
 #permuted_two_sample_ttest(metric, threshold=1.3, session=session)

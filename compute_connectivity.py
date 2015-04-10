@@ -28,7 +28,7 @@ def plot_connectivity_matrix(subject_id, group, pc, roi_names,
     output_folder = os.path.join(set_figure_base_dir('connectivity'), suffix)
     
     if not os.path.isdir(output_folder):
-        os.makedirs(output_folder)    
+        os.makedirs(output_folder)
    
     output_file = os.path.join(output_folder,
                                '_'.join([suffix, 'matrix', group,
@@ -250,11 +250,11 @@ def compute_group_sparse_covariance(dataset, session='func1',
 
 ##############################################################################
 
-#preprocessing_folder = 'pipeline_1'
-#prefix = 'swr'
-preprocessing_folder = 'pipeline_2'
-prefix = 'resampled_wr'
-msdl = True
+preprocessing_folder = 'pipeline_1'
+prefix = 'swr'
+#preprocessing_folder = 'pipeline_2'
+#prefix = 'resampled_wr'
+msdl = False
 
 dataset = load_dynacomp(preprocessing_folder=preprocessing_folder,
                         prefix=prefix)

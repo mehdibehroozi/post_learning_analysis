@@ -55,21 +55,41 @@ def load_dynacomp_fc(subject_id, session='func1', metric='pc', msdl=True,
                      preprocessing_folder='pipeline_1'):
     """ Loads of Dynacomp FC results depending on the FC metrics
     """
-    CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
-       
-    fname = '_'.join([metric, session, preprocessing_folder])
-    if msdl == True:
-        fname += '_msdl'
-        
-    filename = os.path.join(CONN_DIR, subject_id, fname + '.npz')
+    
+    if session == 'avg':
+        return mean_fc(subject_id, metric, msdl, preprocessing_folder)
+    else:   
+        CONN_DIR = set_data_base_dir('Dynacomp/connectivity')
+           
+        fname = '_'.join([metric, session, preprocessing_folder])
+        if msdl == True:
+            fname += '_msdl'
+            
+        filename = os.path.join(CONN_DIR, subject_id, fname + '.npz')
+    
+        data = np.load(filename)
+        if metric == 'gl' or metric == 'gsc':
+            data = data['covariance']
+        else:
+            data = data['correlation']
+        return data
 
-    data = np.load(filename)
-    if metric == 'gl' or metric == 'gsc':
-        data = data['covariance']
-    else:
-        data = data['correlation']
-    return data
 
+def mean_fc(subject_id, metric='pc', msdl=True,
+            preprocessing_folder='pipeline_1'):
+    """ Returns mean FC accross sessions func1, func2
+    """
+    return np.mean([load_dynacomp_fc(subject_id,
+                                     session='func1',
+                                     metric=metric,
+                                     msdl=msdl,
+                                     preprocessing_folder=preprocessing_folder),
+                    load_dynacomp_fc(subject_id,
+                                     session='func2',
+                                     metric=metric,
+                                     msdl=msdl,
+                                     preprocessing_folder=preprocessing_folder),
+                                     ], axis=0)
 
 def load_dynacomp_rois():
     """ Returns paths of Dynacomp ROIs
