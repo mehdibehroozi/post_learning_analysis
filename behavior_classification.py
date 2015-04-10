@@ -160,7 +160,7 @@ for i, group in enumerate(['v', 'av']):
     yn[dataset.group_indices[group]] = 1
 
 # Do classification for each metric
-for metric in ['gl', 'gsc']:
+for metric in ['pc', 'gl','gsc']:
     
     # 3 groups classification
     X = []
