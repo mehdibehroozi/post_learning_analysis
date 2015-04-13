@@ -4,12 +4,12 @@ Created on Mon Apr  6 21:27:23 2015
 
 @author: mr243268
 """
-
+import os
 import numpy as np
 from loader import load_dynacomp, load_msdl_names_and_coords,\
-                   load_dynacomp_fc, load_roi_names_and_coords
+                   load_dynacomp_fc, load_roi_names_and_coords, set_figure_base_dir
 from sklearn.linear_model import RidgeClassifierCV, LogisticRegression
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.lda import LDA
 from sklearn.learning_curve import learning_curve
 from sklearn.preprocessing import StandardScaler
@@ -71,7 +71,7 @@ def pairwise_classification(X, y, title=''):
     rdgc = RidgeClassifierCV(alphas=np.logspace(-3, 3, 7))
 
     # Support Vector classification    
-    svc = SVC()
+    svc = LinearSVC(penalty='l1', dual=False)
     
     # Linear Discriminant Analysis
     lda = LDA()
@@ -79,7 +79,7 @@ def pairwise_classification(X, y, title=''):
     # Logistic Regression
     logit = LogisticRegression(penalty='l1', random_state=42)
 
-    estimator_str = ['lda', 'rdgc', 'logit']
+    estimator_str = ['svc', 'lda', 'rdgc', 'logit']
 
     # train size
     train_size = np.linspace(.2, .9, 8)
@@ -99,10 +99,10 @@ def pairwise_classification(X, y, title=''):
             for train, test in sss:
                 estimator.fit(X[train], y[train])
                 accuracy.append(estimator.score(X[test], y[test]))
-                if e != 'svc' and e != 'lda':
+                if e != 'rdgc' and e != 'lda':
                     w.append(estimator.coef_)
             acc = np.mean(accuracy)
-            acc_std = np.std(accuracy)
+            acc_std = np.std(accuracy)/2
             mean_acc.append(acc)
             std_acc.append(acc_std)
             if len(w) > 0 and acc > best_acc :
@@ -122,7 +122,14 @@ def pairwise_classification(X, y, title=''):
     plt.ylim([.3, .9])
     plt.grid()
     plt.title('Classification ' + title, fontsize=16)
-    
+
+    output_folder = os.path.join(set_figure_base_dir('classification'),
+                                 metric)
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+    output_file = os.path.join(output_folder, 'accuracy_' + title)
+    plt.savefig(output_file)
+
     return best_w, best_acc
             
         
@@ -169,9 +176,9 @@ for metric in ['pc', 'gl','gsc']:
                                   metric=metric, msdl=msdl,
                                   preprocessing_folder=preprocessing_folder)[ind])
     X = np.array(X)
-    plt.figure()
-    classification_learning_curves(X, y, title='_'.join([metric,
-                                                         session, msdl_str]))
+#    plt.figure()
+#    classification_learning_curves(X, y, title='_'.join([metric,
+#                                                         session, msdl_str]))
     
     # pairwise classification
     for i in range(2):
@@ -180,45 +187,82 @@ for metric in ['pc', 'gl','gsc']:
             gr_j = dataset.group_indices[groups[j]]
             Xp = np.vstack((X[gr_i, :], X[gr_j, :]))
             yp = np.array([0] * len(gr_i) + [1] * len(gr_j))
+            output = '_'.join([groups[i], groups[j], metric, session,
+                               msdl_str, preprocessing_folder])
             plt.figure()
-            w,a = pairwise_classification(Xp, yp, title='_'.join([groups[i],
-                                                            groups[j],
-                                                            metric,
-                                                            session,
-                                                            msdl_str]))
+            w,a = pairwise_classification(Xp, yp, title=output)
             print groups[i], groups[j], a
-                                                             
-    # (v + av) vs avn classification
-    plt.figure()
-    w,a = pairwise_classification(X, yn, title='_'.join(['(v+av)/avn',
-                                                    metric,
-                                                    session,
-                                                    msdl_str]))
+            t = np.zeros((len(roi_names), len(roi_names)))
+            t[ind] = np.abs(w)
+            t = (t + t.T) / 2.
+            output_folder = os.path.join(set_figure_base_dir('classification'),
+                                         metric)
+            if not os.path.isdir(output_folder):
+                os.makedirs(output_folder)
+            output_file = os.path.join(output_folder, 'connectome_' + output)
+            plot_connectome(t, roi_coords, title=output,
+                            output_file=output_file, edge_threshold='0%')
+            
 
-    print 'v+av / avn ', a
-    t = np.zeros((len(roi_names), len(roi_names)))
-    t[ind] = np.abs(w)
-    t = (t + t.T) / 2.
-    plot_connectome(t, roi_coords, title='_'.join(['(v+av)/avn',
-                                                    metric,
-                                                    session,
-                                                    msdl_str]),
-                    edge_threshold='98%')
-    
-    
-    # (av + avn) vs v classification
-    plt.figure()
-    w,a = pairwise_classification(X, yv, title='_'.join(['(av+avn)/v',
-                                                    metric,
-                                                    session,
-                                                    msdl_str]))
-    print 'av+avn / v ', a
-    t = np.zeros((len(roi_names), len(roi_names)))
-    t[ind] = np.abs(w)
-    t = (t + t.T) / 2.
-    plot_connectome(t, roi_coords, title='_'.join(['(av+avn)/v',
-                                                    metric,
-                                                    session,
-                                                    msdl_str]),
-                    edge_threshold='98%')
-    break
+    # 1 vs rest
+    for i in range(3):
+        gr_i = dataset.group_indices[groups[i]]
+        yr = np.zeros(X.shape[0])
+        yr[gr_i] = 1
+        output = '_'.join([groups[i] + ' _ rest', metric, session, msdl_str,
+                           preprocessing_folder])
+        plt.figure()
+        w, a = pairwise_classification(X, yr, title=output)
+
+        print groups[i] + ' _ rest', a
+        t = np.zeros((len(roi_names), len(roi_names)))
+        t[ind] = np.abs(w)
+        t = (t + t.T) / 2.
+
+        output_folder = os.path.join(set_figure_base_dir('classification'),
+                                     metric)
+        if not os.path.isdir(output_folder):
+            os.makedirs(output_folder)
+        output_file = os.path.join(output_folder, 'connectome_' + output)
+        plot_connectome(t, roi_coords, title=output, output_file=output_file,
+                        edge_threshold='0%')
+        
+
+#    # (v + av) vs avn classification
+#    plt.figure()
+#    w, a = pairwise_classification(X, yn, title='_'.join(['(v+av)/avn',
+#                                                    metric,
+#                                                    session,
+#                                                    msdl_str,
+#                                                    preprocessing_folder]))
+#
+#    print 'v+av / avn ', a
+#    t = np.zeros((len(roi_names), len(roi_names)))
+#    t[ind] = np.abs(w)
+#    t = (t + t.T) / 2.
+#    plot_connectome(t, roi_coords, title='_'.join(['(v+av)/avn',
+#                                                    metric,
+#                                                    session,
+#                                                    msdl_str,
+#                                                    preprocessing_folder]),
+#                    edge_threshold='0%')
+#    
+#    
+#    # (av + avn) vs v classification
+#    plt.figure()
+#    w, a = pairwise_classification(X, yv, title='_'.join(['(av+avn)/v',
+#                                                    metric,
+#                                                    session,
+#                                                    msdl_str,
+#                                                    preprocessing_folder]))
+#    print 'av+avn / v ', a
+#    t = np.zeros((len(roi_names), len(roi_names)))
+#    t[ind] = np.abs(w)
+#    t = (t + t.T) / 2.
+#    plot_connectome(t, roi_coords, title='_'.join(['(av+avn)/v',
+#                                                    metric,
+#                                                    session,
+#                                                    msdl_str,
+#                                                    preprocessing_folder]),
+#                    edge_threshold='0%')
+#

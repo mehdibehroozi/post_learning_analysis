@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 
 session = 'func1'
 
-dataset = load_dynacomp()
+dataset = load_dynacomp(preprocessing_folder='pipeline_2', prefix='resampled_wr')
 
 for subject_id in dataset.subjects:
     msdl1 = load_dynacomp_msdl_timeseries(subject_id=subject_id,
