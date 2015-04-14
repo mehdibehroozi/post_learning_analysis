@@ -154,7 +154,7 @@ def two_sample_ttest(fc_all, metric, threshold=.05, session='func1',
 #        z_fisher = True
      
     thresh_log = -np.log10(threshold)
-    str_thresh = '%1.2f' %thresh_log
+    str_thresh = '%1.2f' % threshold
     groups = np.unique(dataset.group)
     for i in range(len(groups) - 1):
         for j in range(i + 1, len(groups)):
@@ -199,7 +199,7 @@ def two_sample_ttest(fc_all, metric, threshold=.05, session='func1',
             plt.xticks(range(len(roi_names)), roi_names,
                        rotation='vertical', fontsize=16)
             plt.yticks(range(len(roi_names)), roi_names, fontsize=16)
-
+            plt.tight_layout()
 
             output_folder = os.path.join(set_figure_base_dir('stat/two_sample'),
                                          metric)
@@ -349,13 +349,13 @@ ind = np.tril_indices(len(roi_names), k=-1)
 #session = 'func1'
 #session = 'func2'
 #session = 'avg'
-sessions = ['func1', 'func2', 'avg']
+sessions = ['avg', 'func1', 'func2']
 
 
 #metric = 'pc'
 #metric = 'gl' #graph-lasso
 #metric = 'gsc' #group sparse covariance
-metrics = ['pc', 'gl', 'gsc']
+metrics = ['gsc', 'gl', 'pc']
 
 for met in metrics:
     print 'Stats analysis of FC measure: %s' %met 
@@ -376,4 +376,6 @@ for met in metrics:
                              preprocessing_folder=preprocessing_folder)
             two_sample_ttest(fc_all, met, threshold=0.05, session=sess,
                              preprocessing_folder=preprocessing_folder)
+        break
+    break
 #permuted_two_sample_ttest(metric, threshold=1.3, session=session)
