@@ -57,6 +57,7 @@ for i, group in enumerate(groups):
 plt.legend(groups, loc='lower right')
 plt.grid(which='both')
 
+p = px
 
 # pairwise projection
 for i in range(2):
@@ -66,7 +67,7 @@ for i in range(2):
         Xp = np.vstack((x[gr_i, :], x[gr_j, :]))
         mds = MDS(n_jobs=2, random_state=42)
         mds = Isomap(n_components=2)
-        px = mds.fit_transform(Xp)                
+        px = mds.fit_transform(Xp)
         plt.figure()
         plt.scatter(px[:len(gr_i), 0], px[:len(gr_i), 1], s=80, c='r')
         plt.scatter(px[len(gr_i) + 1:, 0], px[len(gr_i) + 1:, 1], s=80, c='b')
@@ -74,3 +75,10 @@ for i in range(2):
         plt.grid(which='both')
 
 
+print p
+plt.figure()
+for k in range(len(px)):
+    plt.text(p[k, 0], p[k, 1], s=dataset.subjects[k])
+plt.xlim([np.min(p[:, 0]), np.max(p[:, 0])])
+plt.ylim([np.min(p[:, 1]), np.max(p[:, 1])])
+plt.title('subjects')
