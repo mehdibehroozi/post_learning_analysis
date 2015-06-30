@@ -50,7 +50,7 @@ def mask_and_covariance(f):
 
 from joblib import delayed, Parallel
 
-nyu_fc = Parallel(n_jobs=20, verbose=5)(delayed(mask_and_covariance)(f)
+nyu_fc = Parallel(n_jobs=3, verbose=5)(delayed(mask_and_covariance)(f)
                                         for f in nyu_func)
 nyu_fc = np.asarray(nyu_fc)
 
@@ -93,7 +93,7 @@ for i, gr1 in enumerate(sorted(data.keys())[:-1]):
         y = np.asarray([1] * data[gr1].shape[0] + [0] * data[gr2].shape[0])
         sss = StratifiedShuffleSplit(y, n_iter=50, test_size=.25,
                                      random_state=42)
-        acc = Parallel(n_jobs=10, verbose=5)(delayed(train_and_test)
+        acc = Parallel(n_jobs=3, verbose=5)(delayed(train_and_test)
                                                     (X, y, train, test)
                                                     for train, test in sss)
         accuracy_all.append(acc)
